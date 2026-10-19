@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>画风库入口</title>
+<style>
+  :root{--bg:#0f1115;--panel:#151922;--line:#262b36;--tx:#e8eaf0;--tx2:#8b94a6;--blue:#7fb7ff}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:var(--bg);color:var(--tx);
+       font:15px/1.7 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+       display:flex;align-items:center;justify-content:center;padding:28px 18px}
+  .wrap{width:100%;max-width:460px}
+  h1{font-size:20px;margin:0 0 6px}
+  p.sub{color:var(--tx2);margin:0 0 22px;font-size:13px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:14px}
+  .url{word-break:break-all;color:var(--blue);font-size:13px;margin:0 0 4px}
+  .time{color:var(--tx2);font-size:12px}
+  .row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  button,.btn{flex:1 1 180px;min-height:44px;border-radius:11px;border:1px solid var(--line);
+        background:#1d2330;color:var(--tx);font-size:14px;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;text-decoration:none}
+  button.primary{background:#2563eb;border-color:#2563eb;color:#fff;font-weight:600}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  input{width:100%;min-height:42px;border-radius:10px;border:1px solid var(--line);
+        background:#0d1117;color:var(--tx);padding:0 12px;font-size:14px;margin-top:10px}
+  .hint{color:var(--tx2);font-size:12px;margin-top:8px}
+  .ok{color:#5ad19a}.bad{color:#ff8a8a}
+  code{background:#0d1117;border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>画风库入口</h1>
+  <p class="sub">这个地址永远不变；它会自动指向你电脑上当前开着的图库。</p>
+
+  <div class="card">
+    <p class="url" id="url">正在读取当前地址…</p>
+    <div class="time" id="time"></div>
+    <div class="row">
+      <button class="primary" id="go" disabled>打开画风库</button>
+      <button id="clear">清除密钥</button>
+    </div>
+    <div class="hint" id="keyhint"></div>
+    <input id="key" placeholder="首次使用：粘贴访问密钥（?k= 后面那串）" spellcheck="false" autocomplete="off" autocapitalize="off">
+    <div class="hint">密钥只存在这台设备的浏览器里，不会上传到 GitHub。</div>
+  </div>
+
+  <div class="card">
+    <p class="url" style="color:var(--tx2);font-size:12px;margin:0">
+      电脑和手机在同一个 WiFi 时，也可以直接用局域网地址（更快，不经过隧道）：
+      <code id="lan">http://127.0.0.1:60421</code>
+    </p>
+  </div>
+</div>
+
+<script>
+const LS_KEY = 'gallery.key';
+const $ = s => document.querySelector(s);
+let cur = '';
+
+function setKeyHint(){
+  const k = localStorage.getItem(LS_KEY) || '';
+  $('#keyhint').innerHTML = k
+    ? '密钥已保存（<span class="ok">••••' + k.slice(-4) + '</span>）'
+    : '还没有密钥，直接打开会被拒绝（401）。';
+  $('#go').disabled = !(cur && k);
+}
+
+function openGallery(){
+  const k = localStorage.getItem(LS_KEY) || '';
+  if (!cur || !k) return;
+  location.href = cur.replace(/\/+$/, '') + '/?k=' + encodeURIComponent(k);
+}
+
+async function load(){
+  try{
+    const r = await fetch('./latest.json?_=' + Date.now(), {cache:'no-store'});
+    if(!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    cur = (d.url || '').trim();
+    $('#url').textContent = cur || '（电脑端守护没在跑，地址暂时为空）';
+    $('#url').className = 'url' + (cur ? '' : ' bad');
+    $('#time').textContent = d.updated ? '更新于 ' + d.updated : '';
+    if (d.lan) $('#lan').textContent = d.lan;
+  }catch(e){
+    $('#url').textContent = '读不到 latest.json（' + e.message + '）';
+    $('#url').className = 'url bad';
+  }
+  setKeyHint();
+}
+
+$('#key').addEventListener('input', e => {
+  const v = e.target.value.trim();
+  if (v) localStorage.setItem(LS_KEY, v.replace(/^.*[?&]k=/, ''));
+  setKeyHint();
+});
+$('#go').onclick = openGallery;
+$('#clear').onclick = () => {
+  localStorage.removeItem(LS_KEY);
+  $('#key').value = '';
+  setKeyHint();
+};
+$('#key').value = localStorage.getItem(LS_KEY) ? '' : '';
+
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>
