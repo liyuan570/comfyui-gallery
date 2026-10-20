@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>画风库 · 全部图片</title>
+<style>
+:root{
+  --bg:#0d0f12; --bg2:#12151a; --panel:#171b21; --line:rgba(255,255,255,.075);
+  --tx:#e8eaee; --tx2:#9aa2b1; --tx3:#646c7a;
+  --accent:#7aa2ff; --danger:#ff6b6b; --ok:#4ade80;
+  --r:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:var(--bg); color:var(--tx);
+  font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select{font:inherit;color:inherit}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#2a3038;border-radius:6px;border:2px solid var(--bg)}
+::-webkit-scrollbar-track{background:transparent}
+
+/* header */
+header{
+  position:sticky;top:0;z-index:60;background:rgba(13,15,18,.86);
+  backdrop-filter:blur(14px);border-bottom:1px solid var(--line);
+}
+.hd{display:flex;align-items:center;gap:14px;padding:12px 20px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600;letter-spacing:.2px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(122,162,255,.13)}
+.stat{color:var(--tx3);font-size:12.5px;font-variant-numeric:tabular-nums}
+.spacer{flex:1}
+
+.search{position:relative}
+.search input{
+  width:230px;background:var(--panel);border:1px solid var(--line);border-radius:9px;
+  padding:7px 11px 7px 30px;outline:none;transition:.15s;
+}
+.search input:focus{border-color:rgba(122,162,255,.55);box-shadow:0 0 0 3px rgba(122,162,255,.12)}
+.search svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);opacity:.4}
+
+.btn{
+  display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:9px;
+  border:1px solid var(--line);background:var(--panel);color:var(--tx2);
+  transition:.15s;white-space:nowrap;
+}
+.btn:hover{background:#1e232a;color:var(--tx);border-color:rgba(255,255,255,.13)}
+.btn.on{background:rgba(122,162,255,.14);border-color:rgba(122,162,255,.45);color:#c7d7ff}
+.btn.danger{color:#ffb4b4}
+.btn.danger:hover{background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.4)}
+.btn:disabled{opacity:.5;cursor:default;pointer-events:none}
+
+/* toolbar */
+.toolbar{display:flex;gap:10px;align-items:center;padding:0 20px 11px;overflow:hidden}
+.chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;flex:1;scrollbar-width:thin}
+.chip{
+  padding:5px 11px;border-radius:20px;border:1px solid var(--line);
+  background:transparent;color:var(--tx2);font-size:12.5px;white-space:nowrap;transition:.15s;
+}
+.chip:hover{color:var(--tx);border-color:rgba(255,255,255,.16)}
+.chip.on{background:#e8eaee;color:#111418;border-color:#e8eaee;font-weight:600}
+.chip b{font-weight:600;opacity:.55;margin-left:5px;font-variant-numeric:tabular-nums}
+
+select.sort{
+  background:var(--panel);border:1px solid var(--line);border-radius:9px;
+  padding:6px 9px;color:var(--tx2);outline:none;cursor:pointer;
+}
+
+/* grid */
+main{padding:6px 20px 90px}
+/* 瀑布流：行高 2px 的微网格，由 JS 按真实图片比例算 span。
+   图片永远按原始比例完整显示，不再被 1:1 方框裁掉两头。 */
+.grid{
+  display:grid;gap:13px;align-items:start;
+  grid-template-columns:repeat(auto-fill,minmax(168px,1fr));
+  grid-auto-rows:2px;
+}
+/* 大图模式：每行少放几张，手机上单列铺满，细节看得清 */
+body.big .grid{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+.card{
+  position:relative;border-radius:var(--r);overflow:hidden;background:var(--panel);
+  border:1px solid var(--line);cursor:zoom-in;transition:transform .16s,border-color .16s;
+  display:flex;flex-direction:column;grid-row-end:span 40;
+}
+.card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.18)}
+.card .pic{position:relative;aspect-ratio:var(--ar,3/4);flex:0 0 auto;overflow:hidden;background:#0f1216}
+.card img{width:100%;height:100%;object-fit:contain;display:block;opacity:0;transition:opacity .35s}
+.card img.loaded{opacity:1}
+.card .ph{position:absolute;inset:0;display:grid;place-items:center;color:#2a3038;font-size:22px}
+
+/* 角色名常显：触屏没有 hover，放图下面才不会看不到 */
+.card .cap{padding:6px 9px 8px;border-top:1px solid var(--line);background:var(--panel);
+  height:52px;flex:1 0 auto;overflow:hidden}
+.card .c1{
+  font-size:12.5px;font-weight:500;color:var(--tx);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.card .c2{
+  font-size:10.5px;color:var(--tx3);margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.card.untagged .c1{color:var(--tx2)}
+.card.untagged .c1::after{
+  content:"待标注";font-size:9.5px;color:var(--tx3);border:1px solid var(--line);
+  border-radius:4px;padding:0 4px;margin-left:5px;vertical-align:1px;
+}
+
+.card .ov{
+  position:absolute;inset:auto 0 0 0;padding:24px 9px 8px;
+  background:linear-gradient(to top,rgba(0,0,0,.82),rgba(0,0,0,0));
+  opacity:0;transition:.18s;pointer-events:none;
+}
+.card:hover .ov{opacity:1}
+.card .nm{
+  font-size:11.5px;color:#dfe4ec;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  text-shadow:0 1px 2px #000;
+}
+.card .mt{font-size:10.5px;color:#9aa2b1;margin-top:2px}
+
+.card .kill{
+  position:absolute;top:7px;right:7px;width:27px;height:27px;border-radius:8px;
+  background:rgba(10,12,15,.72);backdrop-filter:blur(6px);
+  color:#ffb4b4;display:grid;place-items:center;opacity:0;transition:.15s;
+  border:1px solid rgba(255,107,107,.28);
+}
+.card:hover .kill{opacity:1}
+.card .kill:hover{background:rgba(255,107,107,.9);color:#fff}
+
+.card .save{
+  position:absolute;top:7px;right:40px;width:27px;height:27px;border-radius:8px;
+  background:rgba(10,12,15,.72);backdrop-filter:blur(6px);
+  color:#c7d7ff;display:grid;place-items:center;opacity:.55;transition:.15s;
+  border:1px solid rgba(122,162,255,.3);font-size:15px;line-height:1;z-index:3;
+}
+.card:hover .save{opacity:1}
+.card .save:hover{background:rgba(122,162,255,.92);color:#08101f}
+/* 触屏没有 hover，两个角标常显，否则手机上根本按不到 */
+@media (hover:none){
+  .card .kill,.card .save{opacity:.92}
+}
+
+.card .tick{
+  position:absolute;top:7px;left:7px;width:22px;height:22px;border-radius:7px;
+  border:1.5px solid rgba(255,255,255,.55);background:rgba(10,12,15,.55);
+  display:none;place-items:center;
+}
+body.selecting .card .tick{display:grid}
+body.selecting .card .kill{display:none}
+body.selecting .card .save{display:none}
+body.selecting .card{cursor:pointer}
+.card.sel{outline:2px solid var(--accent);outline-offset:-2px}
+.card.sel .tick{background:var(--accent);border-color:var(--accent);color:#08101f}
+
+.sentinel{height:40px;display:grid;place-items:center;color:var(--tx3);font-size:12.5px}
+.empty{padding:80px 20px;text-align:center;color:var(--tx3)}
+.grid .empty{grid-column:1/-1;grid-row-end:span 60}
+.empty b{display:block;color:var(--tx2);font-size:15px;margin:10px 0 4px}
+
+/* selection bar */
+.selbar{
+  position:fixed;left:50%;bottom:22px;transform:translate(-50%,140%);
+  display:flex;align-items:center;gap:12px;padding:10px 12px 10px 18px;
+  background:#1b2027;border:1px solid rgba(255,255,255,.13);border-radius:14px;
+  box-shadow:0 18px 50px rgba(0,0,0,.6);z-index:80;transition:transform .22s cubic-bezier(.2,.9,.25,1);
+}
+.selbar.show{transform:translate(-50%,0)}
+.selbar .cnt{font-size:13px;color:var(--tx2)}
+.selbar .cnt b{color:var(--tx);font-size:15px}
+
+/* lightbox：默认「适应屏幕」看全图，点图切 1:1 原始像素，stage 可拖/滚 */
+.lb{position:fixed;inset:0;z-index:100;background:rgba(6,7,9,.96);display:none;
+    backdrop-filter:blur(6px)}
+.lb.show{display:grid;grid-template-columns:1fr 320px}
+.lb .stage{position:relative;display:flex;padding:28px;overflow:auto;
+           overscroll-behavior:contain}
+.lb .stage img{flex:0 0 auto;margin:auto;max-width:100%;max-height:calc(100vh - 56px);
+               object-fit:contain;border-radius:6px;cursor:zoom-in;
+               box-shadow:0 24px 70px rgba(0,0,0,.7)}
+.lb .stage img.actual{max-width:none;max-height:none;cursor:zoom-out;border-radius:0;
+                      box-shadow:none}
+.lb .hint{
+  position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:2;
+  font-size:11.5px;color:#8b93a3;background:rgba(10,12,16,.72);border:1px solid var(--line);
+  padding:4px 10px;border-radius:20px;pointer-events:none;opacity:0;transition:.2s;
+}
+.lb .stage:hover .hint{opacity:1}
+.lb .nav{
+  position:absolute;top:50%;transform:translateY(-50%);width:42px;height:66px;
+  display:grid;place-items:center;border-radius:10px;color:#cfd6e2;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+}
+.lb .nav:hover{background:rgba(255,255,255,.13)}
+.lb .nav.prev{left:14px} .lb .nav.next{right:14px}
+.lb .close{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:9px;
+           background:rgba(255,255,255,.07);display:grid;place-items:center}
+.lb .close:hover{background:rgba(255,255,255,.16)}
+
+.side{background:var(--bg2);border-left:1px solid var(--line);padding:20px;overflow:auto}
+.side .grab{display:block;margin:0 0 5px;font-size:14px;font-weight:600;
+            word-break:break-all;line-height:1.4}
+.side .grab i{display:none}
+.side .grab .gi{display:none}
+.side h3{font-size:14px;margin:0 0 4px;word-break:break-all;line-height:1.4}
+.side .sub{color:var(--tx3);font-size:12px;word-break:break-all;margin-bottom:18px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;font-size:12.5px;
+    border-bottom:1px solid rgba(255,255,255,.045)}
+.kv span{color:var(--tx3)}
+.kv b{font-weight:500;text-align:right;word-break:break-all}
+.side .acts{display:grid;gap:8px;margin-top:20px}
+
+/* trash */
+.drawer{
+  position:fixed;top:0;right:0;height:100%;width:390px;z-index:95;background:var(--bg2);
+  border-left:1px solid var(--line);transform:translateX(100%);transition:transform .24s cubic-bezier(.2,.9,.25,1);
+  display:flex;flex-direction:column;
+}
+.drawer.show{transform:none}
+.drawer .dh{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.drawer .dh h4{margin:0;font-size:14px}
+.drawer .db{flex:1;overflow:auto;padding:10px 12px}
+.tr{display:flex;gap:10px;align-items:center;padding:10px;border-radius:10px;border:1px solid transparent}
+.tr:hover{background:#181d24;border-color:var(--line)}
+.tr .nm{flex:1;min-width:0}
+.tr .nm div:first-child{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr .nm div:last-child{font-size:11px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr button{font-size:12px;padding:4px 8px;border-radius:7px;border:1px solid var(--line);color:var(--tx2)}
+.tr button:hover{color:var(--tx);background:#20262e}
+.drawer .df{padding:12px;border-top:1px solid var(--line);display:flex;gap:8px}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90;display:none}
+.scrim.show{display:block}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:120;display:none;place-items:center;background:rgba(4,5,7,.7)}
+.modal.show{display:grid}
+.mbox{width:min(430px,calc(100vw - 40px));background:var(--bg2);border:1px solid rgba(255,255,255,.11);
+      border-radius:16px;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.7)}
+.mbox h4{margin:0 0 8px;font-size:15px}
+.mbox p{margin:0 0 6px;color:var(--tx2);font-size:13px;line-height:1.6}
+.mbox .warn{color:#ffc46b;font-size:12.5px;margin-top:10px;padding:8px 10px;border-radius:8px;
+            background:rgba(255,196,107,.08);border:1px solid rgba(255,196,107,.2);display:none}
+.mbox .row{display:flex;gap:9px;justify-content:flex-end;margin-top:18px}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,90px);z-index:200;
+       background:#20262e;border:1px solid rgba(255,255,255,.13);border-radius:11px;
+       padding:10px 16px;font-size:13px;box-shadow:0 14px 40px rgba(0,0,0,.5);
+       transition:transform .24s;display:flex;align-items:center;gap:10px}
+.toast.show{transform:translate(-50%,0)}
+.toast button{color:var(--accent);font-size:13px;font-weight:500}
+
+@media (max-width:900px){
+  .hd{gap:8px;padding:10px 12px;flex-wrap:wrap}
+  .search{order:9;flex:1}
+  .search input{width:100%}
+  main{padding:6px 12px 96px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(126px,1fr));gap:9px}
+  body.big .grid{grid-template-columns:1fr}
+
+  /* 灯箱（手机）：图片按屏宽铺开、上下可滚，才看得到长图全貌；
+     信息面板改成底部抽屉，默认只留一条把手，不再压掉图片高度 */
+  .lb.show{display:block}
+  .lb .stage{position:absolute;inset:0;display:block;padding:0;overflow:auto;
+             -webkit-overflow-scrolling:touch}
+  .lb .stage img{margin:0 auto;width:100%;height:auto;max-width:none;max-height:none;
+                 border-radius:0;box-shadow:none;cursor:default;
+                 padding:10px 0 76px;will-change:transform}
+  .lb .stage img.actual{padding:0 0 76px}
+  .lb .hint{display:none}
+  .lb .nav{position:fixed;top:50%;margin-top:-33px;z-index:6;
+           background:rgba(10,12,16,.5);backdrop-filter:blur(8px)}
+  .lb .close{position:fixed;top:12px;right:12px;z-index:7;
+             background:rgba(10,12,16,.6);backdrop-filter:blur(8px)}
+  .side{position:fixed;left:0;right:0;bottom:0;top:auto;max-height:74vh;
+        padding:0 18px 16px;border-left:0;border-top:1px solid var(--line);
+        border-radius:16px 16px 0 0;z-index:8;
+        transform:translateY(calc(100% - 54px));
+        transition:transform .24s cubic-bezier(.2,.9,.25,1);
+        box-shadow:0 -14px 40px rgba(0,0,0,.55)}
+  .side.open{transform:none}
+  .side .grab{display:flex;align-items:center;height:54px;margin:0;
+              font-size:13.5px;cursor:pointer;
+              position:sticky;top:0;background:var(--bg2)}
+  .side .grab i{display:block;position:absolute;left:50%;transform:translateX(-50%);
+                width:34px;height:4px;border-radius:2px;background:rgba(255,255,255,.22)}
+  .side .grab span{max-width:72%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .side .grab .gi{display:block;margin-left:auto;font-size:11.5px;
+                  color:var(--tx3);font-style:normal;font-weight:400}
+  .side h3{display:none}
+  .side .sub{margin-bottom:10px}
+  .drawer{width:100%}
+  .selbar{width:calc(100vw - 24px);flex-wrap:wrap;justify-content:flex-start;gap:8px;padding:10px 12px}
+  .selbar .cnt{width:100%;margin-bottom:2px}
+  .selbar .btn{flex:1 1 auto;white-space:nowrap}
+}
+/* 云端只读模式（MODE='cloud'）：静态托管没有后端，删除/回收站/打包收起 */
+.cloud-mode #trashBtn,
+.cloud-mode #selDel,
+.cloud-mode .kill,
+.cloud-mode #lbDel,
+.cloud-mode #lbReveal{display:none!important}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <div class="brand"><i class="dot"></i>画风库 · 全部图片 <span style="opacity:.35;font-size:11px;font-weight:400">v3</span></div>
+    <div class="stat" id="stat">加载中…</div>
+    <div class="spacer"></div>
+    <div class="search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="q" placeholder="搜角色 / 画风 / 种子（空格可叠加）">
+    </div>
+    <button class="btn" id="bigBtn" title="切换每行图片大小">大图</button>
+    <button class="btn" id="selBtn">选择</button>
+    <button class="btn" id="saveBtn" title="保存到本机：单张点图片右上角 ⤓；多选后批量打包">保存</button>
+    <button class="btn" id="trashBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+      回收站 <span id="trashCnt" style="opacity:.6"></span>
+    </button>
+  </div>
+  <div class="toolbar">
+    <div class="chips" id="chips"></div>
+    <select class="sort" id="charSel" title="按角色筛选"><option value="*">全部角色</option></select>
+    <select class="sort" id="sort">
+      <option value="new">最新优先</option>
+      <option value="old">最旧优先</option>
+      <option value="name">按名称</option>
+      <option value="char">按角色</option>
+      <option value="size">按体积</option>
+    </select>
+  </div>
+</header>
+
+<main>
+  <div class="grid" id="grid"></div>
+  <div class="sentinel" id="sentinel"></div>
+</main>
+
+<div class="selbar" id="selbar">
+  <div class="cnt">已选 <b id="selCnt">0</b> 张</div>
+  <button class="btn" id="selAll">全选当前</button>
+  <button class="btn" id="selNone">取消</button>
+  <button class="btn" id="selSave">保存选中</button>
+  <button class="btn danger" id="selDel">删除选中</button>
+</div>
+
+<div class="lb" id="lb">
+  <div class="stage">
+    <button class="nav prev" id="lbPrev">‹</button>
+    <img id="lbImg" alt="">
+    <div class="hint">点击图片切换 1:1 原始像素 · 滚轮/拖动查看</div>
+    <button class="nav next" id="lbNext">›</button>
+    <button class="close" id="lbClose">✕</button>
+  </div>
+  <aside class="side" id="lbSide">
+    <div class="grab" id="lbGrab"><i></i><span id="lbName"></span><em class="gi">信息 ⌃</em></div>
+    <div class="sub" id="lbPath"></div>
+    <div id="lbKv"></div>
+    <div class="acts">
+      <button class="btn" id="lbSave">保存原图到本机</button>
+      <button class="btn" id="lbFull">查看原图</button>
+      <button class="btn" id="lbReveal">在资源管理器中打开</button>
+      <button class="btn danger" id="lbDel">删除这张</button>
+    </div>
+  </aside>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="drawer" id="drawer">
+  <div class="dh">
+    <h4>回收站</h4>
+    <div class="stat" id="trashInfo" style="flex:1"></div>
+    <button class="btn" id="drawerClose">关闭</button>
+  </div>
+  <div class="db" id="trashList"></div>
+  <div class="df">
+    <button class="btn" id="trashRestoreAll">全部恢复</button>
+    <button class="btn danger" id="trashEmpty">清空回收站</button>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="mbox">
+    <h4 id="mTitle">删除图片</h4>
+    <p id="mBody"></p>
+    <div class="warn" id="mWarn"></div>
+    <div class="row">
+      <button class="btn" id="mCancel">取消</button>
+      <button class="btn danger" id="mOk">删除</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toastMsg"></span><button id="toastAct" style="display:none"></button></div>
+
+<script>
+const S = { items:[], trash:[], group:'*', charFilter:'*', q:'', sort:'new',
+            filtered:[], shown:0, chars:{}, styles:{}, indexed:0, byPath:{},
+            selecting:false, sel:new Set(), lbIndex:-1, lastBatch:[] };
+window.__GALLERY__ = {"root": "cloud", "count": 269, "size": 692820391, "groups": {"ComfyUI/output": 120, "review/modern_1020_170639": 12, "review/b1020_131506": 19, "review/b1020_123720": 37, "out": 62, ".": 19}, "chars": {"icey": {"cn": "ICEY", "alias": "icey"}, "frieren": {"cn": "芙莉莲", "alias": "frieren"}, "kamisato_ayaka": {"cn": "神里绫华", "alias": "kamisato_ayaka"}, "anya": {"cn": "阿尼亚", "alias": "anya_(spy_x_family)"}, "gotoh_hitori": {"cn": "后藤一里", "alias": "gotoh_hitori"}, "tokisaki_kurumi": {"cn": "时崎狂三", "alias": "tokisaki_kurumi"}, "nahida": {"cn": "纳西妲", "alias": "nahida"}, "raiden_shogun": {"cn": "雷电将军", "alias": "raiden_shogun"}, "hu_tao": {"cn": "胡桃", "alias": "hu_tao"}, "klee": {"cn": "可莉", "alias": "klee"}, "yukinoshita_yukino": {"cn": "雪之下雪乃", "alias": "yukinoshita_yukino"}, "shinomiya_kaguya": {"cn": "四宫辉夜", "alias": "shinomiya_kaguya"}, "hoshino": {"cn": "星野", "alias": "hoshino_(blue_archive)"}, "kafuu_chino": {"cn": "香风智乃", "alias": "kafuu chino"}, "hirasawa_yui": {"cn": "平泽唯", "alias": "hirasawa yui"}, "kirisaki_chitoge": {"cn": "桐崎千棘", "alias": "kirisaki chitoge"}, "suzumiya_haruhi": {"cn": "凉宫春日", "alias": "suzumiya haruhi"}, "kitagawa_marin": {"cn": "喜多川海梦", "alias": "kitagawa marin"}, "touma_kazusa": {"cn": "冬马和纱", "alias": "touma_kazusa"}, "komi_shouko": {"cn": "古见硝子", "alias": "komi_shouko"}, "shenhe": {"cn": "申鹤", "alias": "shenhe (genshin impact)"}, "kasumigaoka_utaha": {"cn": "霞之丘诗羽", "alias": "kasumigaoka_utaha"}, "emilia": {"cn": "爱蜜莉雅", "alias": "emilia (re:zero)"}, "lily_ender": {"cn": "莉莉", "alias": "lilyel"}, "chihaya_anon": {"cn": "千早爱音", "alias": "chihaya_anon"}, "nagasaki_soyo": {"cn": "长崎素世", "alias": "nagasaki_soyo"}, "yamada_ryo": {"cn": "山田凉", "alias": "yamada_ryo"}, "takamatsu_tomori": {"cn": "高松灯", "alias": "takamatsu_tomori"}, "shiina_mahiru": {"cn": "椎名真昼", "alias": "shiina_mahiru"}, "ayanami_rei": {"cn": "绫波丽", "alias": "ayanami_rei"}, "gojo_satoru": {"cn": "五条悟", "alias": "gojo_satoru"}, "yae_miko": {"cn": "八重神子", "alias": "yae_miko"}, "kiana_kaslana": {"cn": "琪亚娜", "alias": "kiana_kaslana"}, "hakurei_reimu": {"cn": "博丽灵梦", "alias": "hakurei_reimu"}}, "styles": {"shigure_ui": {"cn": "时雨羽衣", "artist": "", "retired": false}, "shirabi": {"cn": "しらび", "artist": "by shirabi, ", "retired": false}, "tiv": {"cn": "tiv", "artist": "by tiv, ", "retired": false}, "mishima_kurone": {"cn": "三嶋くろね", "artist": "", "retired": false}, "tsunako": {"cn": "つなこ", "artist": "", "retired": false}, "tomose_shunsaku": {"cn": "友瀬しゅんさく", "artist": "", "retired": false}, "anmi": {"cn": "Anmi", "artist": "", "retired": false}, "benitama": {"cn": "benitama", "artist": "", "retired": false}, "kaigen_1025": {"cn": "かいげん1025", "artist": "by kaigen_1025, ", "retired": false}, "natsume_eri": {"cn": "夏目えり", "artist": "by natsume_eri, ", "retired": false}, "amazuyu_tatsuki": {"cn": "甘雨たつき", "artist": "by amazuyu_tatsuki, ", "retired": false}, "huanxiang_heitu": {"cn": "幻想黑兔", "artist": "by huanxiang_heitu, ", "retired": false}, "hiten": {"cn": "Hiten", "artist": "", "retired": false}, "mery": {"cn": "mery", "artist": "by mery_(yangmalgage), ", "retired": false}, "misaki_kurehito": {"cn": "深崎暮人", "artist": "by misaki_kurehito, ", "retired": false}, "pikurusu": {"cn": "pikurusu", "artist": "by pikurusu, ", "retired": false}, "rella": {"cn": "rella", "artist": "", "retired": false}, "ishikei": {"cn": "石恵 (ishikei)", "artist": "by ishikei, ", "retired": false}, "shinkai_makoto": {"cn": "新海诚 (背景向)", "artist": "by shinkai_makoto, ", "retired": false}, "ma1ma1helmes": {"cn": "ma1ma1helmes（LoRA）", "artist": "", "retired": false}, "niji_semi_realism": {"cn": "Niji Sweet Spot（半写实）", "artist": "", "retired": false}, "aura_phantasy": {"cn": "Aura Phantasy（LoRA·韩系萌）", "artist": "", "retired": false}, "shexyo": {"cn": "Shexyo（LoRA·暖调动画）", "artist": "", "retired": false}, "ink_wash_noob": {"cn": "水墨 ink wash（NoobAI 版）", "artist": "", "retired": false}, "ink_wash_xl": {"cn": "水墨 ink wash（SDXL 版）", "artist": "", "retired": false}, "sketchit": {"cn": "Sketchit（墨水写意素描）", "artist": "", "retired": false}, "kamiya_kaori": {"cn": "kamiya_kaori", "artist": "by kamiya kaori, ", "retired": true}, "buriki": {"cn": "ブリキ", "artist": "", "retired": true}, "mignon": {"cn": "みぐのん", "artist": "", "retired": true}, "kantoku": {"cn": "カントク", "artist": "", "retired": true}, "saitom": {"cn": "saitom", "artist": "", "retired": true}, "karory": {"cn": "karory", "artist": "", "retired": true}, "nanao_naru": {"cn": "七尾奈留", "artist": "", "retired": true}, "fuzichoco": {"cn": "藤ちょこ", "artist": "", "retired": true}, "as109": {"cn": "as109", "artist": "", "retired": true}, "modare": {"cn": "modare", "artist": "", "retired": true}, "kouda_tomohiro": {"cn": "甲田智弘", "artist": "", "retired": true}, "merunyaa": {"cn": "merunyaa", "artist": "", "retired": true}, "abec": {"cn": "abec", "artist": "", "retired": true}, "katsushika_hokusai_1760": {"cn": "葛饰北斋(1760)", "artist": "", "retired": true}, "mikimoto_haruhiko": {"cn": "美树本晴彦", "artist": "", "retired": true}, "kitazume_hiroyuki": {"cn": "北爪宏幸", "artist": "", "retired": true}, "urushihara_satoshi": {"cn": "漆原智志", "artist": "", "retired": true}, "kuroneko_koubou": {"cn": "黒猫工房", "artist": "", "retired": true}, "ozaki_toyo": {"cn": "尾崎亨", "artist": "", "retired": true}, "hana_hana_mo_arashi_mo": {"cn": "花(花も嵐も)", "artist": "", "retired": true}, "brenni_murasaki": {"cn": "brenni_murasaki", "artist": "", "retired": true}, "jose_salot": {"cn": "jose_salot", "artist": "", "retired": true}, "kate_avery": {"cn": "kate_avery", "artist": "", "retired": true}, "watanabe_masato": {"cn": "渡邉正人", "artist": "", "retired": true}, "titsay": {"cn": "titsay", "artist": "", "retired": true}, "johannatarkela": {"cn": "johannatarkela", "artist": "", "retired": true}, "undoz": {"cn": "undoz", "artist": "", "retired": true}, "xrriver": {"cn": "xrriver", "artist": "", "retired": true}, "17_asobo": {"cn": "17_asobo", "artist": "", "retired": true}, "glassbearer": {"cn": "glassbearer", "artist": "", "retired": true}, "mame_han_chan": {"cn": "mame_han_chan", "artist": "", "retired": true}, "yuzuha_yuzutime": {"cn": "yuzuha_(yuzutime)", "artist": "", "retired": true}, "manga_mono": {"cn": "黑白漫画（monochrome）", "artist": "", "retired": true}, "rutkowski": {"cn": "Greg Rutkowski（奇幻油画）", "artist": "", "retired": true}, "ciloranko": {"cn": "ciloranko", "artist": "", "retired": true}, "lack": {"cn": "lack", "artist": "", "retired": true}, "mika_pikazo": {"cn": "ミカピカゾ", "artist": "", "retired": true}, "ask_(askzy)": {"cn": "ask", "artist": "", "retired": true}, "wataboku": {"cn": "wataboku", "artist": "", "retired": true}, "kuroboshi_kouhaku": {"cn": "黒星紅白", "artist": "", "retired": true}, "yoneyama_mai": {"cn": "米山舞", "artist": "", "retired": true}, "redjuice": {"cn": "redjuice", "artist": "", "retired": true}}, "indexed": 236, "trash": [], "items": [{"p": "ComfyUI/output/491720_00001_.png", "d": "ComfyUI/output", "n": "491720_00001_.png", "s": 2572491, "t": 1792492784, "w": 1592, "h": 2048, "id": "87a8a1286f", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/491710_00001_.png", "d": "ComfyUI/output", "n": "491710_00001_.png", "s": 2090380, "t": 1792492722, "w": 1592, "h": 2048, "id": "4c6ddcb80a", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/491700_00001_.png", "d": "ComfyUI/output", "n": "491700_00001_.png", "s": 2719371, "t": 1792492660, "w": 1592, "h": 2048, "id": "61cb69f61b", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/491641_00002_.png", "d": "ComfyUI/output", "n": "491641_00002_.png", "s": 2520600, "t": 1792492569, "w": 1592, "h": 2048, "id": "57d61f7296", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/491641_00001_.png", "d": "ComfyUI/output", "n": "491641_00001_.png", "s": 2549284, "t": 1792492010, "w": 1592, "h": 2048, "id": "b41504f5fb", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/491634_00001_.png", "d": "ComfyUI/output", "n": "491634_00001_.png", "s": 2791350, "t": 1792491945, "w": 1592, "h": 2048, "id": "4c1129efb9", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/491627_00001_.png", "d": "ComfyUI/output", "n": "491627_00001_.png", "s": 2744245, "t": 1792491880, "w": 1592, "h": 2048, "id": "1c27183d5f", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/491620_00001_.png", "d": "ComfyUI/output", "n": "491620_00001_.png", "s": 2383240, "t": 1792491815, "w": 1592, "h": 2048, "id": "7bac08954f", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/491613_00001_.png", "d": "ComfyUI/output", "n": "491613_00001_.png", "s": 3640968, "t": 1792491748, "w": 1592, "h": 2048, "id": "4f40946846", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/491606_00001_.png", "d": "ComfyUI/output", "n": "491606_00001_.png", "s": 2626847, "t": 1792491678, "w": 1592, "h": 2048, "id": "25b0f392e4", "ext": ".png", "has_orig": false}, {"p": "review/modern_1020_170639/sheet.png", "d": "review/modern_1020_170639", "n": "sheet.png", "s": 1953804, "t": 1792487453, "w": 1380, "h": 1587, "id": "119c37b9be", "ext": ".png", "has_orig": false}, {"p": "review/modern_1020_170639/00_baseline_20261020.png", "d": "review/modern_1020_170639", "n": "00_baseline_20261020.png", "s": 2091293, "t": 1792487440, "w": 1592, "h": 2048, "id": "71c689e4f0", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/20261020_00011_.png", "d": "ComfyUI/output", "n": "20261020_00011_.png", "s": 2091293, "t": 1792487440, "w": 1592, "h": 2048, "id": "7494c07301", "ext": ".png", "has_orig": false}, {"p": "review/modern_1020_170639/impressionism_20261020.png", "d": "review/modern_1020_170639", "n": "impressionism_20261020.png", "s": 3120541, "t": 1792487412, "w": 1592, "h": 2048, "id": "7554929489", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/20261020_00010_.png", "d": "ComfyUI/output", "n": "20261020_00010_.png", "s": 3120541, "t": 1792487412, "w": 1592, "h": 2048, "id": "99ea2c5421", "ext": ".png", "has_orig": false}, {"p": "review/modern_1020_170639/surrealism_20261020.png", "d": "review/modern_1020_170639", "n": "surrealism_20261020.png", "s": 1353687, "t": 1792487391, "w": 1592, "h": 2048, "id": "e77cf79502", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/20261020_00009_.png", "d": "ComfyUI/output", "n": "20261020_00009_.png", "s": 1353687, "t": 1792487391, "w": 1592, "h": 2048, "id": "b16287ba66", "ext": ".png", "has_orig": false}, {"p": "review/modern_1020_170639/cubism_20261020.png", "d": "review/modern_1020_170639", "n": "cubism_20261020.png", "s": 1282145, "t": 1792487370, "w": 1592, "h": 2048, "id": "f109813b76", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/20261020_00008_.png", "d": "ComfyUI/output", "n": "20261020_00008_.png", "s": 1282145, "t": 1792487370, "w": 1592, "h": 2048, "id": "378447f5c7", "ext": ".png", "has_orig": false}, {"p": "review/modern_1020_170639/art_nouveau_20261020.png", "d": "review/modern_1020_170639", "n": "art_nouveau_20261020.png", "s": 4084431, "t": 1792487349, "w": 1592, "h": 2048, "id": "84a578625a", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/20261020_00007_.png", "d": "ComfyUI/output", "n": "20261020_00007_.png", "s": 4084431, "t": 1792487349, "w": 1592, "h": 2048, "id": "60d465c984", "ext": ".png", "has_orig": false}, {"p": "review/modern_1020_170639/pop_art_20261020.png", "d": "review/modern_1020_170639", "n": "pop_art_20261020.png", "s": 2609011, "t": 1792487328, "w": 1592, "h": 2048, "id": "0f0c922615", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/20261020_00006_.png", "d": "ComfyUI/output", "n": "20261020_00006_.png", "s": 2609011, "t": 1792487328, "w": 1592, "h": 2048, "id": "21b413069c", "ext": ".png", "has_orig": false}, {"p": "review/modern_1020_170639/art_deco_20261020.png", "d": "review/modern_1020_170639", "n": "art_deco_20261020.png", "s": 2911660, "t": 1792487307, "w": 1592, "h": 2048, "id": "7dabba91b9", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/20261020_00005_.png", "d": "ComfyUI/output", "n": "20261020_00005_.png", "s": 2911660, "t": 1792487307, "w": 1592, "h": 2048, "id": "4bfd09f17c", "ext": ".png", "has_orig": false}, {"p": "review/modern_1020_170639/bauhaus_20261020.png", "d": "review/modern_1020_170639", "n": "bauhaus_20261020.png", "s": 969982, "t": 1792487286, "w": 1592, "h": 2048, "id": "e17bd0fb25", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/20261020_00004_.png", "d": "ComfyUI/output", "n": "20261020_00004_.png", "s": 969982, "t": 1792487286, "w": 1592, "h": 2048, "id": "6ca6584699", "ext": ".png", "has_orig": false}, {"p": "review/modern_1020_170639/de_stijl_20261020.png", "d": "review/modern_1020_170639", "n": "de_stijl_20261020.png", "s": 4016205, "t": 1792487265, "w": 1592, "h": 2048, "id": "1b3871fea0", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/20261020_00003_.png", "d": "ComfyUI/output", "n": "20261020_00003_.png", "s": 4016205, "t": 1792487265, "w": 1592, "h": 2048, "id": "ae350828b3", "ext": ".png", "has_orig": false}, {"p": "review/modern_1020_170639/suprematism_20261020.png", "d": "review/modern_1020_170639", "n": "suprematism_20261020.png", "s": 783746, "t": 1792487244, "w": 1592, "h": 2048, "id": "26b046ec09", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/20261020_00002_.png", "d": "ComfyUI/output", "n": "20261020_00002_.png", "s": 783746, "t": 1792487243, "w": 1592, "h": 2048, "id": "8e378913c9", "ext": ".png", "has_orig": false}, {"p": "review/modern_1020_170639/constructivism_20261020.png", "d": "review/modern_1020_170639", "n": "constructivism_20261020.png", "s": 1540373, "t": 1792487223, "w": 1592, "h": 2048, "id": "3672dcde53", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/20261020_00001_.png", "d": "ComfyUI/output", "n": "20261020_00001_.png", "s": 1540373, "t": 1792487221, "w": 1592, "h": 2048, "id": "a52baaf8b2", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00110_.png", "d": "ComfyUI/output", "n": "960702_00110_.png", "s": 3598916, "t": 1792474490, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960703, "id": "6028812ee3", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00109_.png", "d": "ComfyUI/output", "n": "960702_00109_.png", "s": 3664145, "t": 1792474393, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960703, "id": "b6b05d208b", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00108_.png", "d": "ComfyUI/output", "n": "960702_00108_.png", "s": 2745860, "t": 1792474277, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960702, "id": "aa9be40409", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00107_.png", "d": "ComfyUI/output", "n": "960702_00107_.png", "s": 2770243, "t": 1792474242, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960702, "id": "e97120ebdb", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/sheet.png", "d": "review/b1020_131506", "n": "sheet.png", "s": 3581208, "t": 1792473799, "w": 1990, "h": 1514, "kind": "other", "id": "6794139176", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/18_tsunako_d0.6.png", "d": "review/b1020_131506", "n": "18_tsunako_d0.6.png", "s": 2724012, "t": 1792473796, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "tsunako", "style_cn": "つなこ", "kind": "char", "src": "prompt", "seed": 960719, "id": "4256be7e47", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960719_00017_.png", "d": "ComfyUI/output", "n": "960719_00017_.png", "s": 2816978, "t": 1792473796, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "tsunako", "style_cn": "つなこ", "kind": "char", "src": "prompt", "seed": 960719, "id": "db2f255188", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/17_tsunako_d0.6.png", "d": "review/b1020_131506", "n": "17_tsunako_d0.6.png", "s": 2984848, "t": 1792473771, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "tsunako", "style_cn": "つなこ", "kind": "char", "src": "prompt", "seed": 960702, "id": "ed1038bcf9", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00106_.png", "d": "ComfyUI/output", "n": "960702_00106_.png", "s": 3092460, "t": 1792473770, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "tsunako", "style_cn": "つなこ", "kind": "char", "src": "prompt", "seed": 960702, "id": "40924044f2", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/16_tsunako_d0.45.png", "d": "review/b1020_131506", "n": "16_tsunako_d0.45.png", "s": 2743845, "t": 1792473742, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "tsunako", "style_cn": "つなこ", "kind": "char", "src": "prompt", "seed": 960719, "id": "325be3a2a5", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960719_00016_.png", "d": "ComfyUI/output", "n": "960719_00016_.png", "s": 2848134, "t": 1792473742, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "tsunako", "style_cn": "つなこ", "kind": "char", "src": "prompt", "seed": 960719, "id": "9425275ba2", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/15_tsunako_d0.45.png", "d": "review/b1020_131506", "n": "15_tsunako_d0.45.png", "s": 2903024, "t": 1792473717, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "tsunako", "style_cn": "つなこ", "kind": "char", "src": "prompt", "seed": 960702, "id": "9166a176b0", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00105_.png", "d": "ComfyUI/output", "n": "960702_00105_.png", "s": 3010607, "t": 1792473716, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "tsunako", "style_cn": "つなこ", "kind": "char", "src": "prompt", "seed": 960702, "id": "5e2dcf330d", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/14_tsunako_base.png", "d": "review/b1020_131506", "n": "14_tsunako_base.png", "s": 2518013, "t": 1792473688, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "tsunako", "style_cn": "つなこ", "kind": "char", "src": "prompt", "seed": 960719, "id": "d864da4398", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960719_00015_.png", "d": "ComfyUI/output", "n": "960719_00015_.png", "s": 2619591, "t": 1792473687, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "tsunako", "style_cn": "つなこ", "kind": "char", "src": "prompt", "seed": 960719, "id": "c27881646d", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/13_tsunako_base.png", "d": "review/b1020_131506", "n": "13_tsunako_base.png", "s": 2692915, "t": 1792473664, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "tsunako", "style_cn": "つなこ", "kind": "char", "src": "prompt", "seed": 960702, "id": "659f6017f8", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00104_.png", "d": "ComfyUI/output", "n": "960702_00104_.png", "s": 2788094, "t": 1792473663, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "tsunako", "style_cn": "つなこ", "kind": "char", "src": "prompt", "seed": 960702, "id": "1ba7c9e5ed", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/12_rella_d0.6.png", "d": "review/b1020_131506", "n": "12_rella_d0.6.png", "s": 2749449, "t": 1792473636, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "rella", "style_cn": "rella", "kind": "char", "src": "prompt", "seed": 960719, "id": "a4f6a50bb3", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960719_00014_.png", "d": "ComfyUI/output", "n": "960719_00014_.png", "s": 2853631, "t": 1792473636, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "rella", "style_cn": "rella", "kind": "char", "src": "prompt", "seed": 960719, "id": "aa324834bc", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/11_rella_d0.6.png", "d": "review/b1020_131506", "n": "11_rella_d0.6.png", "s": 2784377, "t": 1792473610, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "rella", "style_cn": "rella", "kind": "char", "src": "prompt", "seed": 960702, "id": "6c887285d1", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00103_.png", "d": "ComfyUI/output", "n": "960702_00103_.png", "s": 2886782, "t": 1792473610, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "rella", "style_cn": "rella", "kind": "char", "src": "prompt", "seed": 960702, "id": "6d62da8974", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/10_rella_d0.45.png", "d": "review/b1020_131506", "n": "10_rella_d0.45.png", "s": 2607663, "t": 1792473582, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "rella", "style_cn": "rella", "kind": "char", "src": "prompt", "seed": 960719, "id": "23324547d8", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960719_00013_.png", "d": "ComfyUI/output", "n": "960719_00013_.png", "s": 2705637, "t": 1792473581, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "rella", "style_cn": "rella", "kind": "char", "src": "prompt", "seed": 960719, "id": "dd34766891", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/09_rella_d0.45.png", "d": "review/b1020_131506", "n": "09_rella_d0.45.png", "s": 2748896, "t": 1792473556, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "rella", "style_cn": "rella", "kind": "char", "src": "prompt", "seed": 960702, "id": "2693348e9a", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00102_.png", "d": "ComfyUI/output", "n": "960702_00102_.png", "s": 2833358, "t": 1792473555, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "rella", "style_cn": "rella", "kind": "char", "src": "prompt", "seed": 960702, "id": "db169c3c35", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/08_rella_base.png", "d": "review/b1020_131506", "n": "08_rella_base.png", "s": 2908963, "t": 1792473527, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "rella", "style_cn": "rella", "kind": "char", "src": "prompt", "seed": 960719, "id": "b57eb44a33", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960719_00012_.png", "d": "ComfyUI/output", "n": "960719_00012_.png", "s": 3011384, "t": 1792473526, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "rella", "style_cn": "rella", "kind": "char", "src": "prompt", "seed": 960719, "id": "66e2688322", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/07_rella_base.png", "d": "review/b1020_131506", "n": "07_rella_base.png", "s": 2729680, "t": 1792473501, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "rella", "style_cn": "rella", "kind": "char", "src": "prompt", "seed": 960702, "id": "f570cbe489", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00101_.png", "d": "ComfyUI/output", "n": "960702_00101_.png", "s": 2823101, "t": 1792473501, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "rella", "style_cn": "rella", "kind": "char", "src": "prompt", "seed": 960702, "id": "3dfc0cb95e", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/06_hiten_d0.6.png", "d": "review/b1020_131506", "n": "06_hiten_d0.6.png", "s": 2398725, "t": 1792473473, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960719, "id": "3154d9a8e4", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960719_00011_.png", "d": "ComfyUI/output", "n": "960719_00011_.png", "s": 2466107, "t": 1792473473, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960719, "id": "a7157cd9fe", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/05_hiten_d0.6.png", "d": "review/b1020_131506", "n": "05_hiten_d0.6.png", "s": 3339468, "t": 1792473447, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960702, "id": "8d2f63e7e6", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00100_.png", "d": "ComfyUI/output", "n": "960702_00100_.png", "s": 3441901, "t": 1792473446, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960702, "id": "04192f3039", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/04_hiten_d0.45.png", "d": "review/b1020_131506", "n": "04_hiten_d0.45.png", "s": 2498501, "t": 1792473417, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960719, "id": "5166e859f6", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960719_00010_.png", "d": "ComfyUI/output", "n": "960719_00010_.png", "s": 2571885, "t": 1792473417, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960719, "id": "6d00e6d679", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/03_hiten_d0.45.png", "d": "review/b1020_131506", "n": "03_hiten_d0.45.png", "s": 3194485, "t": 1792473390, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960702, "id": "f0a32c613f", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00099_.png", "d": "ComfyUI/output", "n": "960702_00099_.png", "s": 3291823, "t": 1792473389, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960702, "id": "6e261a719c", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/02_hiten_base.png", "d": "review/b1020_131506", "n": "02_hiten_base.png", "s": 2304301, "t": 1792473360, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960719, "id": "05b089dbed", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960719_00009_.png", "d": "ComfyUI/output", "n": "960719_00009_.png", "s": 2375657, "t": 1792473359, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960719, "id": "241a054c7a", "ext": ".png", "has_orig": false}, {"p": "review/b1020_131506/01_hiten_base.png", "d": "review/b1020_131506", "n": "01_hiten_base.png", "s": 2659316, "t": 1792473334, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960702, "id": "8972e6636c", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00098_.png", "d": "ComfyUI/output", "n": "960702_00098_.png", "s": 2745860, "t": 1792473333, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960702, "id": "b7b3cc51e5", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/20261019_00002_.png", "d": "ComfyUI/output", "n": "20261019_00002_.png", "s": 1644153, "t": 1792473180, "w": 2048, "h": 1401, "char": "hirasawa_yui", "char_cn": "平泽唯", "style": "shinkai_makoto", "style_cn": "新海诚 (背景向)", "kind": "char", "src": "prompt", "seed": 20261019, "id": "a363a3d6a8", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/20261019_00001_.png", "d": "ComfyUI/output", "n": "20261019_00001_.png", "s": 2574656, "t": 1792473151, "w": 1592, "h": 2048, "char": "anya", "char_cn": "阿尼亚", "style": "ishikei", "style_cn": "石恵 (ishikei)", "kind": "char", "src": "prompt", "seed": 20261019, "id": "e8681c7042", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/405565_00001_.png", "d": "ComfyUI/output", "n": "405565_00001_.png", "s": 2810878, "t": 1792473120, "w": 1401, "h": 2048, "char": "kasumigaoka_utaha", "char_cn": "霞之丘诗羽", "style": "misaki_kurehito", "style_cn": "深崎暮人", "kind": "char", "src": "prompt", "seed": 405565, "id": "95f9312927", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/405526_00001_.png", "d": "ComfyUI/output", "n": "405526_00001_.png", "s": 2706891, "t": 1792473094, "w": 1401, "h": 2048, "char": "komi_shouko", "char_cn": "古见硝子", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 405526, "id": "013b21481f", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/950109_00002_.png", "d": "ComfyUI/output", "n": "950109_00002_.png", "s": 2582349, "t": 1792473068, "w": 2048, "h": 1401, "char": "hu_tao", "char_cn": "胡桃", "style": "kaigen_1025", "style_cn": "かいげん1025", "kind": "char", "src": "prompt", "seed": 950109, "id": "bb0c8f8487", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960952_00001_.png", "d": "ComfyUI/output", "n": "960952_00001_.png", "s": 2422620, "t": 1792473040, "w": 1592, "h": 2048, "char": "emilia", "char_cn": "爱蜜莉雅", "style": "shirabi", "style_cn": "しらび", "kind": "char", "src": "prompt", "seed": 960952, "id": "77f0130d89", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/sheet.png", "d": "review/b1020_123720", "n": "sheet.png", "s": 6610056, "t": 1792471993, "w": 1990, "h": 3002, "kind": "other", "id": "f222d08eeb", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/36_shinkai_makoto_lora0.6.png", "d": "review/b1020_123720", "n": "36_shinkai_makoto_lora0.6.png", "s": 1980497, "t": 1792471988, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "shinkai_makoto", "style_cn": "新海诚 (背景向)", "kind": "char", "src": "prompt", "seed": 960719, "id": "d6145bcf5f", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/35_shinkai_makoto_lora0.6.png", "d": "review/b1020_123720", "n": "35_shinkai_makoto_lora0.6.png", "s": 2006627, "t": 1792471965, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "shinkai_makoto", "style_cn": "新海诚 (背景向)", "kind": "char", "src": "prompt", "seed": 960702, "id": "74d7599c91", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/34_shinkai_makoto_lora.png", "d": "review/b1020_123720", "n": "34_shinkai_makoto_lora.png", "s": 1915420, "t": 1792471939, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "shinkai_makoto", "style_cn": "新海诚 (背景向)", "kind": "char", "src": "prompt", "seed": 960719, "id": "cf5c3dc260", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/33_shinkai_makoto_lora.png", "d": "review/b1020_123720", "n": "33_shinkai_makoto_lora.png", "s": 1967743, "t": 1792471914, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "shinkai_makoto", "style_cn": "新海诚 (背景向)", "kind": "char", "src": "prompt", "seed": 960702, "id": "5e463fc8c4", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/32_shinkai_makoto_tag.png", "d": "review/b1020_123720", "n": "32_shinkai_makoto_tag.png", "s": 1429179, "t": 1792471886, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "shinkai_makoto", "style_cn": "新海诚 (背景向)", "kind": "char", "src": "prompt", "seed": 960719, "id": "0e45dd09db", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/31_shinkai_makoto_tag.png", "d": "review/b1020_123720", "n": "31_shinkai_makoto_tag.png", "s": 2013289, "t": 1792471862, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "shinkai_makoto", "style_cn": "新海诚 (背景向)", "kind": "char", "src": "prompt", "seed": 960702, "id": "612e206ffb", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/30_shirabi_lora0.6.png", "d": "review/b1020_123720", "n": "30_shirabi_lora0.6.png", "s": 2283129, "t": 1792471836, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "shirabi", "style_cn": "しらび", "kind": "char", "src": "prompt", "seed": 960719, "id": "0ab149d7cb", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/29_shirabi_lora0.6.png", "d": "review/b1020_123720", "n": "29_shirabi_lora0.6.png", "s": 1876131, "t": 1792471811, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "shirabi", "style_cn": "しらび", "kind": "char", "src": "prompt", "seed": 960702, "id": "0e9480a5a2", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/28_shirabi_lora.png", "d": "review/b1020_123720", "n": "28_shirabi_lora.png", "s": 2208859, "t": 1792471782, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "shirabi", "style_cn": "しらび", "kind": "char", "src": "prompt", "seed": 960719, "id": "afa78f75b3", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/27_shirabi_lora.png", "d": "review/b1020_123720", "n": "27_shirabi_lora.png", "s": 2414661, "t": 1792471756, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "shirabi", "style_cn": "しらび", "kind": "char", "src": "prompt", "seed": 960702, "id": "0433151cd0", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/26_shirabi_tag.png", "d": "review/b1020_123720", "n": "26_shirabi_tag.png", "s": 2333348, "t": 1792471727, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "shirabi", "style_cn": "しらび", "kind": "char", "src": "prompt", "seed": 960719, "id": "229e3caabc", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/25_shirabi_tag.png", "d": "review/b1020_123720", "n": "25_shirabi_tag.png", "s": 2467949, "t": 1792471703, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "shirabi", "style_cn": "しらび", "kind": "char", "src": "prompt", "seed": 960702, "id": "1d13f43fdc", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/24_ishikei_lora0.6.png", "d": "review/b1020_123720", "n": "24_ishikei_lora0.6.png", "s": 1796679, "t": 1792471676, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "ishikei", "style_cn": "石恵 (ishikei)", "kind": "char", "src": "prompt", "seed": 960719, "id": "69ac7b0a6d", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/23_ishikei_lora0.6.png", "d": "review/b1020_123720", "n": "23_ishikei_lora0.6.png", "s": 2056097, "t": 1792471651, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "ishikei", "style_cn": "石恵 (ishikei)", "kind": "char", "src": "prompt", "seed": 960702, "id": "3a2fe912ba", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/22_ishikei_lora.png", "d": "review/b1020_123720", "n": "22_ishikei_lora.png", "s": 1928384, "t": 1792471623, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "ishikei", "style_cn": "石恵 (ishikei)", "kind": "char", "src": "prompt", "seed": 960719, "id": "986185a01f", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/21_ishikei_lora.png", "d": "review/b1020_123720", "n": "21_ishikei_lora.png", "s": 1884069, "t": 1792471598, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "ishikei", "style_cn": "石恵 (ishikei)", "kind": "char", "src": "prompt", "seed": 960702, "id": "1f99dcc012", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/20_ishikei_tag.png", "d": "review/b1020_123720", "n": "20_ishikei_tag.png", "s": 2924511, "t": 1792471570, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "ishikei", "style_cn": "石恵 (ishikei)", "kind": "char", "src": "prompt", "seed": 960719, "id": "16b2c38bcc", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/19_ishikei_tag.png", "d": "review/b1020_123720", "n": "19_ishikei_tag.png", "s": 2465931, "t": 1792471546, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "ishikei", "style_cn": "石恵 (ishikei)", "kind": "char", "src": "prompt", "seed": 960702, "id": "c02cbe9e6b", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/18_misaki_kurehito_lora0.6.png", "d": "review/b1020_123720", "n": "18_misaki_kurehito_lora0.6.png", "s": 2102211, "t": 1792471520, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "misaki_kurehito", "style_cn": "深崎暮人", "kind": "char", "src": "prompt", "seed": 960719, "id": "66476b8d6c", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/17_misaki_kurehito_lora0.6.png", "d": "review/b1020_123720", "n": "17_misaki_kurehito_lora0.6.png", "s": 2883330, "t": 1792471495, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "misaki_kurehito", "style_cn": "深崎暮人", "kind": "char", "src": "prompt", "seed": 960702, "id": "84f84ad945", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/16_misaki_kurehito_lora.png", "d": "review/b1020_123720", "n": "16_misaki_kurehito_lora.png", "s": 2221089, "t": 1792471467, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "misaki_kurehito", "style_cn": "深崎暮人", "kind": "char", "src": "prompt", "seed": 960719, "id": "9d3f6bb33a", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/15_misaki_kurehito_lora.png", "d": "review/b1020_123720", "n": "15_misaki_kurehito_lora.png", "s": 2777546, "t": 1792471441, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "misaki_kurehito", "style_cn": "深崎暮人", "kind": "char", "src": "prompt", "seed": 960702, "id": "3e5ce59475", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/14_misaki_kurehito_tag.png", "d": "review/b1020_123720", "n": "14_misaki_kurehito_tag.png", "s": 2070869, "t": 1792471413, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "misaki_kurehito", "style_cn": "深崎暮人", "kind": "char", "src": "prompt", "seed": 960719, "id": "22c93c3a71", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/13_misaki_kurehito_tag.png", "d": "review/b1020_123720", "n": "13_misaki_kurehito_tag.png", "s": 2089440, "t": 1792471390, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "misaki_kurehito", "style_cn": "深崎暮人", "kind": "char", "src": "prompt", "seed": 960702, "id": "c4edd05067", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/12_mery_lora0.6.png", "d": "review/b1020_123720", "n": "12_mery_lora0.6.png", "s": 2884917, "t": 1792471364, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960719, "id": "d8f0b08377", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/11_mery_lora0.6.png", "d": "review/b1020_123720", "n": "11_mery_lora0.6.png", "s": 2728782, "t": 1792471337, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960702, "id": "812046e1be", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/10_mery_lora.png", "d": "review/b1020_123720", "n": "10_mery_lora.png", "s": 3193947, "t": 1792471309, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960719, "id": "08e030968a", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/09_mery_lora.png", "d": "review/b1020_123720", "n": "09_mery_lora.png", "s": 3004939, "t": 1792471283, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960702, "id": "9ee7d36e87", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/08_mery_tag.png", "d": "review/b1020_123720", "n": "08_mery_tag.png", "s": 2439654, "t": 1792471254, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960719, "id": "7084b67432", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/07_mery_tag.png", "d": "review/b1020_123720", "n": "07_mery_tag.png", "s": 2741342, "t": 1792471229, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960702, "id": "e90bd3d20b", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/06_kaigen_1025_lora0.6.png", "d": "review/b1020_123720", "n": "06_kaigen_1025_lora0.6.png", "s": 2155247, "t": 1792471202, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "kaigen_1025", "style_cn": "かいげん1025", "kind": "char", "src": "prompt", "seed": 960719, "id": "a9dc897910", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/05_kaigen_1025_lora0.6.png", "d": "review/b1020_123720", "n": "05_kaigen_1025_lora0.6.png", "s": 1847180, "t": 1792471176, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "kaigen_1025", "style_cn": "かいげん1025", "kind": "char", "src": "prompt", "seed": 960702, "id": "9f0e7fdcac", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/04_kaigen_1025_lora.png", "d": "review/b1020_123720", "n": "04_kaigen_1025_lora.png", "s": 2333105, "t": 1792471146, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "kaigen_1025", "style_cn": "かいげん1025", "kind": "char", "src": "prompt", "seed": 960719, "id": "9ba9f79ab4", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/03_kaigen_1025_lora.png", "d": "review/b1020_123720", "n": "03_kaigen_1025_lora.png", "s": 1621621, "t": 1792471120, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "kaigen_1025", "style_cn": "かいげん1025", "kind": "char", "src": "prompt", "seed": 960702, "id": "98b1b5d7ac", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/02_kaigen_1025_tag.png", "d": "review/b1020_123720", "n": "02_kaigen_1025_tag.png", "s": 2185201, "t": 1792471091, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "kaigen_1025", "style_cn": "かいげん1025", "kind": "char", "src": "prompt", "seed": 960719, "id": "1d9eedabff", "ext": ".png", "has_orig": false}, {"p": "review/b1020_123720/01_kaigen_1025_tag.png", "d": "review/b1020_123720", "n": "01_kaigen_1025_tag.png", "s": 2791040, "t": 1792471067, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "kaigen_1025", "style_cn": "かいげん1025", "kind": "char", "src": "prompt", "seed": 960702, "id": "aff7f4511a", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00097_.png", "d": "ComfyUI/output", "n": "960702_00097_.png", "s": 3104533, "t": 1792470997, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960702, "id": "99e4467a68", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00096_.png", "d": "ComfyUI/output", "n": "960702_00096_.png", "s": 2845308, "t": 1792470969, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960702, "id": "539e96ca49", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00095_.png", "d": "ComfyUI/output", "n": "960702_00095_.png", "s": 2840549, "t": 1792470920, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960702, "id": "745914177d", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00094_.png", "d": "ComfyUI/output", "n": "960702_00094_.png", "s": 3104533, "t": 1792470892, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960702, "id": "f8a9ddf34e", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00093_.png", "d": "ComfyUI/output", "n": "960702_00093_.png", "s": 2845308, "t": 1792470863, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960702, "id": "00a01495df", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960787_00006_.png", "d": "ComfyUI/output", "n": "960787_00006_.png", "s": 1942021, "t": 1792468696, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "kind": "char", "src": "prompt", "seed": 960787, "id": "7251ac2001", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960770_00006_.png", "d": "ComfyUI/output", "n": "960770_00006_.png", "s": 2546429, "t": 1792468671, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "kind": "char", "src": "prompt", "seed": 960770, "id": "79543161ce", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960753_00006_.png", "d": "ComfyUI/output", "n": "960753_00006_.png", "s": 1654267, "t": 1792468646, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "kind": "char", "src": "prompt", "seed": 960753, "id": "6822d51432", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960736_00006_.png", "d": "ComfyUI/output", "n": "960736_00006_.png", "s": 2183093, "t": 1792468620, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "kind": "char", "src": "prompt", "seed": 960736, "id": "487940eee2", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960719_00008_.png", "d": "ComfyUI/output", "n": "960719_00008_.png", "s": 2011217, "t": 1792468595, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "kind": "char", "src": "prompt", "seed": 960719, "id": "1142c26b81", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00092_.png", "d": "ComfyUI/output", "n": "960702_00092_.png", "s": 2051837, "t": 1792468569, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "kind": "char", "src": "prompt", "seed": 960702, "id": "27758ca536", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960787_00005_.png", "d": "ComfyUI/output", "n": "960787_00005_.png", "s": 2607401, "t": 1792468541, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "shirabi", "style_cn": "しらび", "kind": "char", "src": "prompt", "seed": 960787, "id": "1441ec53bb", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960770_00005_.png", "d": "ComfyUI/output", "n": "960770_00005_.png", "s": 1861099, "t": 1792468515, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "shirabi", "style_cn": "しらび", "kind": "char", "src": "prompt", "seed": 960770, "id": "625ae6f310", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960753_00005_.png", "d": "ComfyUI/output", "n": "960753_00005_.png", "s": 2127128, "t": 1792468489, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "shirabi", "style_cn": "しらび", "kind": "char", "src": "prompt", "seed": 960753, "id": "1dc0812262", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960736_00005_.png", "d": "ComfyUI/output", "n": "960736_00005_.png", "s": 1961125, "t": 1792468462, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "shirabi", "style_cn": "しらび", "kind": "char", "src": "prompt", "seed": 960736, "id": "0261926bbf", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960719_00007_.png", "d": "ComfyUI/output", "n": "960719_00007_.png", "s": 2285634, "t": 1792468435, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "shirabi", "style_cn": "しらび", "kind": "char", "src": "prompt", "seed": 960719, "id": "b63f21088e", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960787_00004_.png", "d": "ComfyUI/output", "n": "960787_00004_.png", "s": 2332366, "t": 1792468379, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "kind": "char", "src": "prompt", "seed": 960787, "id": "bb6832ec94", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960770_00004_.png", "d": "ComfyUI/output", "n": "960770_00004_.png", "s": 1860940, "t": 1792468353, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "kind": "char", "src": "prompt", "seed": 960770, "id": "40c7a098d0", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960753_00004_.png", "d": "ComfyUI/output", "n": "960753_00004_.png", "s": 1656981, "t": 1792468328, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "kind": "char", "src": "prompt", "seed": 960753, "id": "33a6da3be4", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960736_00004_.png", "d": "ComfyUI/output", "n": "960736_00004_.png", "s": 2427583, "t": 1792468302, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "kind": "char", "src": "prompt", "seed": 960736, "id": "99ea7141b4", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960719_00006_.png", "d": "ComfyUI/output", "n": "960719_00006_.png", "s": 2011019, "t": 1792468276, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "kind": "char", "src": "prompt", "seed": 960719, "id": "d6c3bbee3f", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960787_00003_.png", "d": "ComfyUI/output", "n": "960787_00003_.png", "s": 2930315, "t": 1792468222, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "kind": "char", "src": "prompt", "seed": 960787, "id": "47a4af000a", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960770_00003_.png", "d": "ComfyUI/output", "n": "960770_00003_.png", "s": 2791646, "t": 1792468196, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "kind": "char", "src": "prompt", "seed": 960770, "id": "2259752e3a", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960753_00003_.png", "d": "ComfyUI/output", "n": "960753_00003_.png", "s": 2200239, "t": 1792468170, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "kind": "char", "src": "prompt", "seed": 960753, "id": "53151378ef", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960736_00003_.png", "d": "ComfyUI/output", "n": "960736_00003_.png", "s": 2558811, "t": 1792468145, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "kind": "char", "src": "prompt", "seed": 960736, "id": "4d6c52e198", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960719_00005_.png", "d": "ComfyUI/output", "n": "960719_00005_.png", "s": 2316999, "t": 1792468120, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "kind": "char", "src": "prompt", "seed": 960719, "id": "3f40ff64fc", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00089_.png", "d": "ComfyUI/output", "n": "960702_00089_.png", "s": 2887353, "t": 1792468094, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "kind": "char", "src": "prompt", "seed": 960702, "id": "362544c6e4", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960787_00002_.png", "d": "ComfyUI/output", "n": "960787_00002_.png", "s": 2126842, "t": 1792468066, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960787, "id": "b1f5196081", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960770_00002_.png", "d": "ComfyUI/output", "n": "960770_00002_.png", "s": 2378382, "t": 1792468041, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960770, "id": "282a531f3a", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960753_00002_.png", "d": "ComfyUI/output", "n": "960753_00002_.png", "s": 2422550, "t": 1792468015, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960753, "id": "7bbb0964bb", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960736_00002_.png", "d": "ComfyUI/output", "n": "960736_00002_.png", "s": 2590073, "t": 1792467989, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960736, "id": "aa1c51276b", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960719_00004_.png", "d": "ComfyUI/output", "n": "960719_00004_.png", "s": 3314573, "t": 1792467964, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960719, "id": "b8ba1bab90", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00088_.png", "d": "ComfyUI/output", "n": "960702_00088_.png", "s": 3104533, "t": 1792467937, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960702, "id": "924a130350", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960787_00001_.png", "d": "ComfyUI/output", "n": "960787_00001_.png", "s": 1938060, "t": 1792467909, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "kaigen_1025", "style_cn": "かいげん1025", "kind": "char", "src": "prompt", "seed": 960787, "id": "b7141e6424", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960770_00001_.png", "d": "ComfyUI/output", "n": "960770_00001_.png", "s": 1938807, "t": 1792467883, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "kaigen_1025", "style_cn": "かいげん1025", "kind": "char", "src": "prompt", "seed": 960770, "id": "a3d5223c5e", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960753_00001_.png", "d": "ComfyUI/output", "n": "960753_00001_.png", "s": 2103394, "t": 1792467858, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "kaigen_1025", "style_cn": "かいげん1025", "kind": "char", "src": "prompt", "seed": 960753, "id": "613c62d717", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960736_00001_.png", "d": "ComfyUI/output", "n": "960736_00001_.png", "s": 2176947, "t": 1792467832, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "kaigen_1025", "style_cn": "かいげん1025", "kind": "char", "src": "prompt", "seed": 960736, "id": "64351045c7", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960719_00003_.png", "d": "ComfyUI/output", "n": "960719_00003_.png", "s": 2423233, "t": 1792467806, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "kaigen_1025", "style_cn": "かいげん1025", "kind": "char", "src": "prompt", "seed": 960719, "id": "a57c4c9350", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00087_.png", "d": "ComfyUI/output", "n": "960702_00087_.png", "s": 1690471, "t": 1792467781, "w": 1592, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "kaigen_1025", "style_cn": "かいげん1025", "kind": "char", "src": "prompt", "seed": 960702, "id": "cdc4d01455", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960719_00002_.png", "d": "ComfyUI/output", "n": "960719_00002_.png", "s": 1504561, "t": 1792467703, "w": 1401, "h": 2048, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960719, "id": "0c70ab2f56", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960719_00001_.png", "d": "ComfyUI/output", "n": "960719_00001_.png", "s": 1524483, "t": 1792467651, "w": 2048, "h": 1401, "char": "kamisato_ayaka", "char_cn": "神里绫华", "style": "kaigen_1025", "style_cn": "かいげん1025", "kind": "char", "src": "prompt", "seed": 960719, "id": "8e41043ccc", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/405482_00004_.png", "d": "ComfyUI/output", "n": "405482_00004_.png", "s": 2568293, "t": 1792463022, "w": 1592, "h": 2048, "char": "touma_kazusa", "char_cn": "冬马和纱", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 405482, "id": "ced5086f9c", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/407457_00001_.png", "d": "ComfyUI/output", "n": "407457_00001_.png", "s": 956381, "t": 1792434391, "w": 1592, "h": 2048, "char": "yamada_ryo", "char_cn": "山田凉", "style": "sketchit", "style_cn": "Sketchit（墨水写意素描）", "kind": "char", "src": "prompt", "seed": 407457, "id": "215b7e2571", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/950109_00001_.png", "d": "ComfyUI/output", "n": "950109_00001_.png", "s": 2283203, "t": 1792434311, "w": 2048, "h": 1401, "char": "hu_tao", "char_cn": "胡桃", "style": "kaigen_1025", "style_cn": "かいげん1025", "kind": "char", "src": "prompt", "seed": 950109, "id": "2e534b0c80", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00029_.png", "d": "ComfyUI/output", "n": "960702_00029_.png", "s": 1281889, "t": 1792425308, "w": 1401, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 960702, "id": "a360ee8e7c", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00027_.png", "d": "ComfyUI/output", "n": "960702_00027_.png", "s": 2398886, "t": 1792425250, "w": 1401, "h": 2048, "char": "shiina_mahiru", "char_cn": "椎名真昼", "kind": "char", "src": "prompt", "seed": 960702, "id": "3c418e3d23", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00025_.png", "d": "ComfyUI/output", "n": "960702_00025_.png", "s": 1840226, "t": 1792425196, "w": 1401, "h": 2048, "char": "emilia", "char_cn": "爱蜜莉雅", "kind": "char", "src": "prompt", "seed": 960702, "id": "97d215d116", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00022_.png", "d": "ComfyUI/output", "n": "960702_00022_.png", "s": 1805642, "t": 1792425112, "w": 1401, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 960702, "id": "8da7399972", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00020_.png", "d": "ComfyUI/output", "n": "960702_00020_.png", "s": 1852633, "t": 1792425054, "w": 1401, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 960702, "id": "b41999d3c7", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00019_.png", "d": "ComfyUI/output", "n": "960702_00019_.png", "s": 2046315, "t": 1792425023, "w": 1401, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 960702, "id": "54400976fd", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00018_.png", "d": "ComfyUI/output", "n": "960702_00018_.png", "s": 1729643, "t": 1792424995, "w": 1401, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 960702, "id": "e2272065b6", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00015_.png", "d": "ComfyUI/output", "n": "960702_00015_.png", "s": 1757899, "t": 1792424910, "w": 1401, "h": 2048, "char": "ayanami_rei", "char_cn": "绫波丽", "kind": "char", "src": "prompt", "seed": 960702, "id": "6d808cc656", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00013_.png", "d": "ComfyUI/output", "n": "960702_00013_.png", "s": 1753371, "t": 1792424854, "w": 1401, "h": 2048, "char": "yukinoshita_yukino", "char_cn": "雪之下雪乃", "kind": "char", "src": "prompt", "seed": 960702, "id": "251c1f83e2", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00012_.png", "d": "ComfyUI/output", "n": "960702_00012_.png", "s": 2510070, "t": 1792424826, "w": 1401, "h": 2048, "char": "shenhe", "char_cn": "申鹤", "kind": "char", "src": "prompt", "seed": 960702, "id": "a06f8c9da5", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00011_.png", "d": "ComfyUI/output", "n": "960702_00011_.png", "s": 2293949, "t": 1792424798, "w": 1401, "h": 2048, "char": "yukinoshita_yukino", "char_cn": "雪之下雪乃", "kind": "char", "src": "prompt", "seed": 960702, "id": "ba4aaa40d8", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00010_.png", "d": "ComfyUI/output", "n": "960702_00010_.png", "s": 1668750, "t": 1792424768, "w": 1401, "h": 2048, "char": "yamada_ryo", "char_cn": "山田凉", "kind": "char", "src": "prompt", "seed": 960702, "id": "b0f8f3dd14", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/960702_00001_.png", "d": "ComfyUI/output", "n": "960702_00001_.png", "s": 2204346, "t": 1792424516, "w": 1401, "h": 2048, "char": "frieren", "char_cn": "芙莉莲", "kind": "char", "src": "prompt", "seed": 960702, "id": "54a76d216d", "ext": ".png", "has_orig": false}, {"p": "out/q3_dump_418703.png", "d": "out", "n": "q3_dump_418703.png", "s": 1563019, "t": 1792413472, "w": 1592, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "index", "seed": 418703, "m": {"char": "hakurei_reimu", "style": "hiten", "scene": "portrait", "preset": "clean", "seed": 418703, "steps": 20, "cfg": 4.5, "sampler": "dpmpp_2m", "scheduler": "karras"}, "id": "744786986b", "ext": ".png", "has_orig": false}, {"p": "out/q2_freeu_418703.png", "d": "out", "n": "q2_freeu_418703.png", "s": 2244483, "t": 1792413202, "w": 1592, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "index", "seed": 418703, "m": {"char": "hakurei_reimu", "style": "hiten", "scene": "portrait", "preset": "balanced", "seed": 418703, "steps": 28, "cfg": 5.5, "sampler": "dpmpp_2m", "scheduler": "karras"}, "id": "de74b71112", "ext": ".png", "has_orig": false}, {"p": "out/reimu_new_hifi_418703.png", "d": "out", "n": "reimu_new_hifi_418703.png", "s": 2577261, "t": 1792410762, "w": 1592, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 418704, "id": "bf0175b396", "ext": ".png", "has_orig": false}, {"p": "out/reimu_new_balanced_418703.png", "d": "out", "n": "reimu_new_balanced_418703.png", "s": 2083220, "t": 1792410678, "w": 1592, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 418703, "id": "83c4f16c26", "ext": ".png", "has_orig": false}, {"p": "out/reimu_q_s40_418703.png", "d": "out", "n": "reimu_q_s40_418703.png", "s": 2159763, "t": 1792410185, "w": 1592, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 418703, "id": "e38d1ea703", "ext": ".png", "has_orig": false}, {"p": "out/reimu_q_euler_418703.png", "d": "out", "n": "reimu_q_euler_418703.png", "s": 2019356, "t": 1792410151, "w": 1592, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 418703, "id": "bc775ed34d", "ext": ".png", "has_orig": false}, {"p": "out/reimu_q_s20_418703.png", "d": "out", "n": "reimu_q_s20_418703.png", "s": 2148822, "t": 1792410123, "w": 1592, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 418703, "id": "061e1b4220", "ext": ".png", "has_orig": false}, {"p": "out/hakurei_reimu_tsunako_dark-studio_418703.png", "d": "out", "n": "hakurei_reimu_tsunako_dark-studio_418703.png", "s": 3050498, "t": 1792408910, "w": 1401, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "style": "tsunako", "style_cn": "つなこ", "kind": "char", "src": "prompt", "seed": 418703, "id": "0237fe39b5", "ext": ".png", "has_orig": false}, {"p": "out/hakurei_reimu_ink_wash_xl_portrait_418703.png", "d": "out", "n": "hakurei_reimu_ink_wash_xl_portrait_418703.png", "s": 2675198, "t": 1792408887, "w": 1592, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "style": "ink_wash_xl", "style_cn": "水墨 ink wash（SDXL 版）", "kind": "char", "src": "prompt", "seed": 418703, "id": "2be72b6f6e", "ext": ".png", "has_orig": false}, {"p": "out/hakurei_reimu_pikurusu_outdoor-close_418703.png", "d": "out", "n": "hakurei_reimu_pikurusu_outdoor-close_418703.png", "s": 2796979, "t": 1792408800, "w": 1592, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "style": "pikurusu", "style_cn": "pikurusu", "kind": "char", "src": "prompt", "seed": 418703, "id": "b1220eef9f", "ext": ".png", "has_orig": false}, {"p": "out/hakurei_reimu_ma1ma1helmes_outdoor-close_418703.png", "d": "out", "n": "hakurei_reimu_ma1ma1helmes_outdoor-close_418703.png", "s": 3283977, "t": 1792408773, "w": 1592, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "style": "ma1ma1helmes", "style_cn": "ma1ma1helmes（LoRA）", "kind": "char", "src": "prompt", "seed": 418703, "id": "7082b57294", "ext": ".png", "has_orig": false}, {"p": "out/hakurei_reimu_hiten_portrait_418703.png", "d": "out", "n": "hakurei_reimu_hiten_portrait_418703.png", "s": 2540836, "t": 1792408744, "w": 1592, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 418703, "id": "ee89137e3e", "ext": ".png", "has_orig": false}, {"p": "out/hakurei_reimu_ishikei_outdoor-close_418703.png", "d": "out", "n": "hakurei_reimu_ishikei_outdoor-close_418703.png", "s": 3159929, "t": 1792408722, "w": 1592, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "style": "ishikei", "style_cn": "石恵 (ishikei)", "kind": "char", "src": "prompt", "seed": 418703, "id": "22ea0fe10c", "ext": ".png", "has_orig": false}, {"p": "out/hakurei_reimu_pixel_art_portrait_418703.png", "d": "out", "n": "hakurei_reimu_pixel_art_portrait_418703.png", "s": 1761118, "t": 1792408669, "w": 1592, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 418703, "id": "a3de9ba1e0", "ext": ".png", "has_orig": false}, {"p": "out/hakurei_reimu_ink_wash_noob_portrait_418703.png", "d": "out", "n": "hakurei_reimu_ink_wash_noob_portrait_418703.png", "s": 1841422, "t": 1792408644, "w": 1592, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "style": "ink_wash_noob", "style_cn": "水墨 ink wash（NoobAI 版）", "kind": "char", "src": "prompt", "seed": 418703, "id": "b46d3637b9", "ext": ".png", "has_orig": false}, {"p": "out/hakurei_reimu_rella_outdoor-close_418703.png", "d": "out", "n": "hakurei_reimu_rella_outdoor-close_418703.png", "s": 2942481, "t": 1792408620, "w": 1592, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "style": "rella", "style_cn": "rella", "kind": "char", "src": "prompt", "seed": 418703, "id": "5420c48c5b", "ext": ".png", "has_orig": false}, {"p": "out/kiana_kaslana_pixel_art_portrait_407147.png", "d": "out", "n": "kiana_kaslana_pixel_art_portrait_407147.png", "s": 1711377, "t": 1792407524, "w": 1592, "h": 2048, "char": "kiana_kaslana", "char_cn": "琪亚娜", "kind": "char", "src": "prompt", "seed": 407147, "id": "34a41d1520", "ext": ".png", "has_orig": false}, {"p": "out/yamada_ryo_sketchit_portrait_407457.png", "d": "out", "n": "yamada_ryo_sketchit_portrait_407457.png", "s": 1034464, "t": 1792407524, "w": 1592, "h": 2048, "char": "yamada_ryo", "char_cn": "山田凉", "style": "sketchit", "style_cn": "Sketchit（墨水写意素描）", "kind": "char", "src": "prompt", "seed": 407457, "id": "cacec0dbca", "ext": ".png", "has_orig": false}, {"p": "out/kasumigaoka_utaha_misaki_kurehito_moe-daily_405565.png", "d": "out", "n": "kasumigaoka_utaha_misaki_kurehito_moe-daily_405565.png", "s": 2909135, "t": 1792405810, "w": 1401, "h": 2048, "char": "kasumigaoka_utaha", "char_cn": "霞之丘诗羽", "style": "misaki_kurehito", "style_cn": "深崎暮人", "kind": "char", "src": "prompt", "seed": 405565, "id": "7c296e7536", "ext": ".png", "has_orig": false}, {"p": "out/touma_kazusa_hiten_portrait_405482.png", "d": "out", "n": "touma_kazusa_hiten_portrait_405482.png", "s": 2834144, "t": 1792405810, "w": 1592, "h": 2048, "char": "touma_kazusa", "char_cn": "冬马和纱", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 405482, "id": "7b0b4f863d", "ext": ".png", "has_orig": false}, {"p": "out/ayanami_rei_iwao178_portrait_403816.png", "d": "out", "n": "ayanami_rei_iwao178_portrait_403816.png", "s": 1645713, "t": 1792403925, "w": 1592, "h": 2048, "char": "ayanami_rei", "char_cn": "绫波丽", "kind": "char", "src": "prompt", "seed": 403816, "id": "916b7d9b14", "ext": ".png", "has_orig": false}, {"p": "out/shiina_mahiru_shexyo_portrait_403746.png", "d": "out", "n": "shiina_mahiru_shexyo_portrait_403746.png", "s": 2154656, "t": 1792403925, "w": 1592, "h": 2048, "char": "shiina_mahiru", "char_cn": "椎名真昼", "style": "shexyo", "style_cn": "Shexyo（LoRA·暖调动画）", "kind": "char", "src": "prompt", "seed": 403746, "id": "ab04ae1ffb", "ext": ".png", "has_orig": false}, {"p": "out/takamatsu_tomori_aura_phantasy_portrait_403672.png", "d": "out", "n": "takamatsu_tomori_aura_phantasy_portrait_403672.png", "s": 2847291, "t": 1792403925, "w": 1592, "h": 2048, "char": "takamatsu_tomori", "char_cn": "高松灯", "style": "aura_phantasy", "style_cn": "Aura Phantasy（LoRA·韩系萌）", "kind": "char", "src": "prompt", "seed": 403672, "id": "9754773e62", "ext": ".png", "has_orig": false}, {"p": "out/takamatsu_tomori_shigure_ui_portrait_960702.png", "d": "out", "n": "takamatsu_tomori_shigure_ui_portrait_960702.png", "s": 3487103, "t": 1792403317, "w": 1592, "h": 2048, "char": "takamatsu_tomori", "char_cn": "高松灯", "style": "aura_phantasy", "style_cn": "Aura Phantasy（LoRA·韩系萌）", "kind": "char", "src": "prompt", "seed": 960702, "id": "a83a20d8f3", "ext": ".png", "has_orig": false}, {"p": "out/shiina_mahiru_shigure_ui_portrait_960702.png", "d": "out", "n": "shiina_mahiru_shigure_ui_portrait_960702.png", "s": 2131314, "t": 1792403257, "w": 1592, "h": 2048, "char": "shiina_mahiru", "char_cn": "椎名真昼", "style": "shexyo", "style_cn": "Shexyo（LoRA·暖调动画）", "kind": "char", "src": "prompt", "seed": 960702, "id": "f297757493", "ext": ".png", "has_orig": false}, {"p": "out/hirasawa_yui_shinkai_makoto_outdoor-sky_20261019.png", "d": "out", "n": "hirasawa_yui_shinkai_makoto_outdoor-sky_20261019.png", "s": 1858512, "t": 1792402075, "w": 2048, "h": 1401, "char": "klee", "char_cn": "可莉", "style": "shinkai_makoto", "style_cn": "新海诚 (背景向)", "kind": "char", "src": "prompt", "seed": 20261019, "id": "53a6112d47", "ext": ".png", "has_orig": false}, {"p": "out/klee_niji_semi_realism_outdoor-close_20261019.png", "d": "out", "n": "klee_niji_semi_realism_outdoor-close_20261019.png", "s": 3021989, "t": 1792402035, "w": 1592, "h": 2048, "char": "klee", "char_cn": "可莉", "style": "niji_semi_realism", "style_cn": "Niji Sweet Spot（半写实）", "kind": "char", "src": "prompt", "seed": 20261019, "id": "7e69a9038e", "ext": ".png", "has_orig": false}, {"p": "out/emilia_shirabi_portrait_960942.png", "d": "out", "n": "emilia_shirabi_portrait_960942.png", "s": 2587423, "t": 1792309474, "w": 1592, "h": 2048, "char": "emilia", "char_cn": "爱蜜莉雅", "style": "shirabi", "style_cn": "しらび", "kind": "char", "src": "prompt", "seed": 960942, "id": "46e0a0555c", "ext": ".png", "has_orig": false}, {"p": "out/emilia_shirabi_portrait_960941.png", "d": "out", "n": "emilia_shirabi_portrait_960941.png", "s": 3530201, "t": 1792309442, "w": 1592, "h": 2048, "char": "emilia", "char_cn": "爱蜜莉雅", "style": "shirabi", "style_cn": "しらび", "kind": "char", "src": "prompt", "seed": 960941, "id": "4dc9b84289", "ext": ".png", "has_orig": false}, {"p": "out/emilia_shirabi_portrait_960902.png", "d": "out", "n": "emilia_shirabi_portrait_960902.png", "s": 3226102, "t": 1792309019, "w": 1592, "h": 2048, "char": "emilia", "char_cn": "爱蜜莉雅", "style": "shirabi", "style_cn": "しらび", "kind": "char", "src": "prompt", "seed": 960902, "id": "57c52c21f7", "ext": ".png", "has_orig": false}, {"p": "out/shenhe_minaba_hideo_outdoor-sky_960831.png", "d": "out", "n": "shenhe_minaba_hideo_outdoor-sky_960831.png", "s": 3085658, "t": 1792308485, "w": 2048, "h": 1401, "char": "shenhe", "char_cn": "申鹤", "kind": "char", "src": "prompt", "seed": 960831, "id": "f5dd91833d", "ext": ".png", "has_orig": false}, {"p": "out/kasumigaoka_utaha_misaki_kurehito_moe-daily_960708.png", "d": "out", "n": "kasumigaoka_utaha_misaki_kurehito_moe-daily_960708.png", "s": 3289767, "t": 1792307273, "w": 1401, "h": 2048, "char": "kasumigaoka_utaha", "char_cn": "霞之丘诗羽", "style": "misaki_kurehito", "style_cn": "深崎暮人", "kind": "char", "src": "prompt", "seed": 960708, "id": "9628685e15", "ext": ".png", "has_orig": false}, {"p": "out/kasumigaoka_utaha_misaki_kurehito_moe-daily_960707.png", "d": "out", "n": "kasumigaoka_utaha_misaki_kurehito_moe-daily_960707.png", "s": 3240074, "t": 1792307240, "w": 1401, "h": 2048, "char": "kasumigaoka_utaha", "char_cn": "霞之丘诗羽", "style": "misaki_kurehito", "style_cn": "深崎暮人", "kind": "char", "src": "prompt", "seed": 960707, "id": "531fb8eb6e", "ext": ".png", "has_orig": false}, {"p": "out/komi_shouko_mery_moe-daily_960704.png", "d": "out", "n": "komi_shouko_mery_moe-daily_960704.png", "s": 3407915, "t": 1792307109, "w": 1401, "h": 2048, "char": "komi_shouko", "char_cn": "古见硝子", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960704, "id": "83434236e0", "ext": ".png", "has_orig": false}, {"p": "out/komi_shouko_mery_moe-daily_960703.png", "d": "out", "n": "komi_shouko_mery_moe-daily_960703.png", "s": 3353206, "t": 1792307073, "w": 1401, "h": 2048, "char": "komi_shouko", "char_cn": "古见硝子", "style": "mery", "style_cn": "mery", "kind": "char", "src": "prompt", "seed": 960703, "id": "682ca5a2d0", "ext": ".png", "has_orig": false}, {"p": "out/touma_kazusa_hiten_portrait_960702.png", "d": "out", "n": "touma_kazusa_hiten_portrait_960702.png", "s": 4163783, "t": 1792307041, "w": 1592, "h": 2048, "char": "touma_kazusa", "char_cn": "冬马和纱", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960702, "id": "3361e007b9", "ext": ".png", "has_orig": false}, {"p": "out/touma_kazusa_hiten_portrait_960701.png", "d": "out", "n": "touma_kazusa_hiten_portrait_960701.png", "s": 2988573, "t": 1792307016, "w": 1592, "h": 2048, "char": "touma_kazusa", "char_cn": "冬马和纱", "style": "hiten", "style_cn": "Hiten", "kind": "char", "src": "prompt", "seed": 960701, "id": "2f54004970", "ext": ".png", "has_orig": false}, {"p": "out/suzumiya_haruhi_tomose_shunsaku_outdoor-sky_960503.png", "d": "out", "n": "suzumiya_haruhi_tomose_shunsaku_outdoor-sky_960503.png", "s": 2591877, "t": 1792305161, "w": 1401, "h": 2048, "char": "suzumiya_haruhi", "char_cn": "凉宫春日", "style": "tomose_shunsaku", "style_cn": "友瀬しゅんさく", "kind": "char", "src": "prompt", "seed": 960503, "id": "4775c93c71", "ext": ".png", "has_orig": false}, {"p": "out/suzumiya_haruhi_tomose_shunsaku_outdoor-sky_960502.png", "d": "out", "n": "suzumiya_haruhi_tomose_shunsaku_outdoor-sky_960502.png", "s": 3662726, "t": 1792305135, "w": 1401, "h": 2048, "char": "suzumiya_haruhi", "char_cn": "凉宫春日", "style": "tomose_shunsaku", "style_cn": "友瀬しゅんさく", "kind": "char", "src": "prompt", "seed": 960502, "id": "9ebbe707cb", "ext": ".png", "has_orig": false}, {"p": "out/suzumiya_haruhi_tomose_shunsaku_outdoor-sky_960501.png", "d": "out", "n": "suzumiya_haruhi_tomose_shunsaku_outdoor-sky_960501.png", "s": 3411138, "t": 1792305111, "w": 1401, "h": 2048, "char": "suzumiya_haruhi", "char_cn": "凉宫春日", "style": "tomose_shunsaku", "style_cn": "友瀬しゅんさく", "kind": "char", "src": "prompt", "seed": 960501, "id": "60d296bf10", "ext": ".png", "has_orig": false}, {"p": "out/kirisaki_chitoge_tiv_moe-daily_960406.png", "d": "out", "n": "kirisaki_chitoge_tiv_moe-daily_960406.png", "s": 3964565, "t": 1792304720, "w": 1401, "h": 2048, "char": "kirisaki_chitoge", "char_cn": "桐崎千棘", "style": "tiv", "style_cn": "tiv", "kind": "char", "src": "prompt", "seed": 960406, "id": "b480853999", "ext": ".png", "has_orig": false}, {"p": "out/kirisaki_chitoge_tiv_moe-daily_960405.png", "d": "out", "n": "kirisaki_chitoge_tiv_moe-daily_960405.png", "s": 3519777, "t": 1792304696, "w": 1401, "h": 2048, "char": "kirisaki_chitoge", "char_cn": "桐崎千棘", "style": "tiv", "style_cn": "tiv", "kind": "char", "src": "prompt", "seed": 960405, "id": "f93285f7bc", "ext": ".png", "has_orig": false}, {"p": "out/kirisaki_chitoge_tiv_moe-daily_960404.png", "d": "out", "n": "kirisaki_chitoge_tiv_moe-daily_960404.png", "s": 3597341, "t": 1792304673, "w": 1401, "h": 2048, "char": "kirisaki_chitoge", "char_cn": "桐崎千棘", "style": "tiv", "style_cn": "tiv", "kind": "char", "src": "prompt", "seed": 960404, "id": "e1b3e56531", "ext": ".png", "has_orig": false}, {"p": "out/kirisaki_chitoge_tiv_moe-daily_960403.png", "d": "out", "n": "kirisaki_chitoge_tiv_moe-daily_960403.png", "s": 3824129, "t": 1792304612, "w": 1401, "h": 2048, "char": "kirisaki_chitoge", "char_cn": "桐崎千棘", "style": "tiv", "style_cn": "tiv", "kind": "char", "src": "prompt", "seed": 960403, "id": "60dc1e3fa5", "ext": ".png", "has_orig": false}, {"p": "out/kirisaki_chitoge_tiv_moe-daily_960402.png", "d": "out", "n": "kirisaki_chitoge_tiv_moe-daily_960402.png", "s": 3810857, "t": 1792304588, "w": 1401, "h": 2048, "char": "kirisaki_chitoge", "char_cn": "桐崎千棘", "style": "tiv", "style_cn": "tiv", "kind": "char", "src": "prompt", "seed": 960402, "id": "68e4aaa2f9", "ext": ".png", "has_orig": false}, {"p": "out/kirisaki_chitoge_tiv_moe-daily_960401.png", "d": "out", "n": "kirisaki_chitoge_tiv_moe-daily_960401.png", "s": 3453277, "t": 1792304563, "w": 1401, "h": 2048, "char": "kirisaki_chitoge", "char_cn": "桐崎千棘", "style": "tiv", "style_cn": "tiv", "kind": "char", "src": "prompt", "seed": 960401, "id": "bfc834ebee", "ext": ".png", "has_orig": false}, {"p": "out/kafuu_chino_natsume_eri_moe-daily_960303.png", "d": "out", "n": "kafuu_chino_natsume_eri_moe-daily_960303.png", "s": 2864722, "t": 1792304348, "w": 1401, "h": 2048, "char": "kafuu_chino", "char_cn": "香风智乃", "style": "natsume_eri", "style_cn": "夏目えり", "kind": "char", "src": "prompt", "seed": 960303, "id": "188b386886", "ext": ".png", "has_orig": false}, {"p": "out/kafuu_chino_natsume_eri_moe-daily_960302.png", "d": "out", "n": "kafuu_chino_natsume_eri_moe-daily_960302.png", "s": 3067835, "t": 1792304322, "w": 1401, "h": 2048, "char": "kafuu_chino", "char_cn": "香风智乃", "style": "natsume_eri", "style_cn": "夏目えり", "kind": "char", "src": "prompt", "seed": 960302, "id": "a6e9d0c8a2", "ext": ".png", "has_orig": false}, {"p": "out/kafuu_chino_natsume_eri_moe-daily_960301.png", "d": "out", "n": "kafuu_chino_natsume_eri_moe-daily_960301.png", "s": 2280317, "t": 1792304297, "w": 1401, "h": 2048, "char": "kafuu_chino", "char_cn": "香风智乃", "style": "natsume_eri", "style_cn": "夏目えり", "kind": "char", "src": "prompt", "seed": 960301, "id": "3ea612ef05", "ext": ".png", "has_orig": false}, {"p": "out/hirasawa_yui_natsume_eri_indoor-day_960302.png", "d": "out", "n": "hirasawa_yui_natsume_eri_indoor-day_960302.png", "s": 2877369, "t": 1792304244, "w": 1401, "h": 2048, "char": "hirasawa_yui", "char_cn": "平泽唯", "style": "natsume_eri", "style_cn": "夏目えり", "kind": "char", "src": "prompt", "seed": 960302, "id": "8c832e1893", "ext": ".png", "has_orig": false}, {"p": "out/hirasawa_yui_natsume_eri_indoor-day_960301.png", "d": "out", "n": "hirasawa_yui_natsume_eri_indoor-day_960301.png", "s": 2313330, "t": 1792304219, "w": 1401, "h": 2048, "char": "hirasawa_yui", "char_cn": "平泽唯", "style": "natsume_eri", "style_cn": "夏目えり", "kind": "char", "src": "prompt", "seed": 960301, "id": "c6ba2abf75", "ext": ".png", "has_orig": false}, {"p": "out/kafuu_chino_natsume_eri_indoor-day_960202.png", "d": "out", "n": "kafuu_chino_natsume_eri_indoor-day_960202.png", "s": 2400459, "t": 1792304191, "w": 1401, "h": 2048, "char": "kafuu_chino", "char_cn": "香风智乃", "style": "natsume_eri", "style_cn": "夏目えり", "kind": "char", "src": "prompt", "seed": 960202, "id": "016ad5be5c", "ext": ".png", "has_orig": false}, {"p": "out/kafuu_chino_natsume_eri_indoor-day_960201.png", "d": "out", "n": "kafuu_chino_natsume_eri_indoor-day_960201.png", "s": 2920519, "t": 1792304167, "w": 1401, "h": 2048, "char": "kafuu_chino", "char_cn": "香风智乃", "style": "natsume_eri", "style_cn": "夏目えり", "kind": "char", "src": "prompt", "seed": 960201, "id": "7fe25890cd", "ext": ".png", "has_orig": false}, {"p": "out/shinomiya_kaguya_huanxiang_heitu_indoor-day_950112.png", "d": "out", "n": "shinomiya_kaguya_huanxiang_heitu_indoor-day_950112.png", "s": 2513695, "t": 1792301521, "w": 1401, "h": 2048, "char": "shinomiya_kaguya", "char_cn": "四宫辉夜", "style": "huanxiang_heitu", "style_cn": "幻想黑兔", "kind": "char", "src": "prompt", "seed": 950112, "id": "115e7656d9", "ext": ".png", "has_orig": false}, {"p": "out/yukinoshita_yukino_amazuyu_tatsuki_indoor-day_950111.png", "d": "out", "n": "yukinoshita_yukino_amazuyu_tatsuki_indoor-day_950111.png", "s": 2631566, "t": 1792301497, "w": 1401, "h": 2048, "char": "yukinoshita_yukino", "char_cn": "雪之下雪乃", "style": "amazuyu_tatsuki", "style_cn": "甘雨たつき", "kind": "char", "src": "prompt", "seed": 950111, "id": "456fc1242c", "ext": ".png", "has_orig": false}, {"p": "out/klee_natsume_eri_outdoor-sky_950110.png", "d": "out", "n": "klee_natsume_eri_outdoor-sky_950110.png", "s": 4042253, "t": 1792301473, "w": 1401, "h": 2048, "char": "klee", "char_cn": "可莉", "style": "natsume_eri", "style_cn": "夏目えり", "kind": "char", "src": "prompt", "seed": 950110, "id": "4c7afb9ba0", "ext": ".png", "has_orig": false}, {"p": "out/hu_tao_kaigen_1025_battle_950109.png", "d": "out", "n": "hu_tao_kaigen_1025_battle_950109.png", "s": 3755416, "t": 1792301448, "w": 2048, "h": 1401, "char": "hu_tao", "char_cn": "胡桃", "style": "kaigen_1025", "style_cn": "かいげん1025", "kind": "char", "src": "prompt", "seed": 950109, "id": "9cd97eda2a", "ext": ".png", "has_orig": false}, {"p": "out/hoshino_anmi_portrait_950107.png", "d": "out", "n": "hoshino_anmi_portrait_950107.png", "s": 3708150, "t": 1792301389, "w": 1592, "h": 2048, "char": "hoshino", "char_cn": "星野", "style": "anmi", "style_cn": "Anmi", "kind": "char", "src": "prompt", "seed": 950107, "id": "9b41bc9c70", "ext": ".png", "has_orig": false}, {"p": "out/nahida_tomose_shunsaku_outdoor-sky_950106.png", "d": "out", "n": "nahida_tomose_shunsaku_outdoor-sky_950106.png", "s": 3861972, "t": 1792301344, "w": 1401, "h": 2048, "char": "nahida", "char_cn": "纳西妲", "style": "tomose_shunsaku", "style_cn": "友瀬しゅんさく", "kind": "char", "src": "prompt", "seed": 950106, "id": "1751d32c88", "ext": ".png", "has_orig": false}, {"p": "out/tokisaki_kurumi_tsunako_dark-studio_950105.png", "d": "out", "n": "tokisaki_kurumi_tsunako_dark-studio_950105.png", "s": 3709476, "t": 1792301317, "w": 1401, "h": 2048, "char": "tokisaki_kurumi", "char_cn": "时崎狂三", "style": "tsunako", "style_cn": "つなこ", "kind": "char", "src": "prompt", "seed": 950105, "id": "fc2bae5938", "ext": ".png", "has_orig": false}, {"p": "out/gotoh_hitori_mishima_kurone_indoor-day_950104.png", "d": "out", "n": "gotoh_hitori_mishima_kurone_indoor-day_950104.png", "s": 3481779, "t": 1792301289, "w": 1401, "h": 2048, "char": "gotoh_hitori", "char_cn": "后藤一里", "style": "mishima_kurone", "style_cn": "三嶋くろね", "kind": "char", "src": "prompt", "seed": 950104, "id": "167efc9198", "ext": ".png", "has_orig": false}, {"p": "out/icey_amazuyu_tatsuki_white_900302.png", "d": "out", "n": "icey_amazuyu_tatsuki_white_900302.png", "s": 2013831, "t": 1792297522, "w": 1401, "h": 2048, "char": "icey", "char_cn": "ICEY", "style": "amazuyu_tatsuki", "style_cn": "甘雨たつき", "kind": "char", "src": "prompt", "seed": 900302, "id": "960c764ac1", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/rt_tsunako_00001_.png", "d": "ComfyUI/output", "n": "rt_tsunako_00001_.png", "s": 3519534, "t": 1792265349, "w": 1400, "h": 2048, "char": "icey", "char_cn": "ICEY", "style": "tsunako", "style_cn": "つなこ", "kind": "char", "src": "prompt", "seed": 771011, "id": "f0553a74c0", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/fin3_a_00001_.png", "d": "ComfyUI/output", "n": "fin3_a_00001_.png", "s": 4349131, "t": 1792263792, "w": 1400, "h": 2048, "char": "icey", "char_cn": "ICEY", "style": "modare", "style_cn": "modare", "kind": "char", "src": "prompt", "seed": 700301, "id": "bb3e6447ce", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/fin2_tomose_00001_.png", "d": "ComfyUI/output", "n": "fin2_tomose_00001_.png", "s": 4294493, "t": 1792263741, "w": 1400, "h": 2048, "char": "icey", "char_cn": "ICEY", "style": "tomose_shunsaku", "style_cn": "友瀬しゅんさく", "kind": "char", "src": "prompt", "seed": 700204, "id": "e4215fb1d6", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/fin_mix_00001_.png", "d": "ComfyUI/output", "n": "fin_mix_00001_.png", "s": 3703694, "t": 1792263565, "w": 1400, "h": 2048, "char": "icey", "char_cn": "ICEY", "style": "shirabi", "style_cn": "しらび", "kind": "char", "src": "prompt", "seed": 700102, "id": "7779ed66b9", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/fin_tomose_00001_.png", "d": "ComfyUI/output", "n": "fin_tomose_00001_.png", "s": 3722679, "t": 1792263541, "w": 1400, "h": 2048, "char": "icey", "char_cn": "ICEY", "style": "tomose_shunsaku", "style_cn": "友瀬しゅんさく", "kind": "char", "src": "prompt", "seed": 700101, "id": "be329165c1", "ext": ".png", "has_orig": false}, {"p": "ab8_modare.png", "d": ".", "n": "ab8_modare.png", "s": 3990764, "t": 1792261462, "w": 1400, "h": 2048, "char": "icey", "char_cn": "ICEY", "style": "modare", "style_cn": "modare", "kind": "char", "src": "prompt", "seed": 410081, "id": "0600a3778c", "ext": ".png", "has_orig": false}, {"p": "ab8_mkurone.png", "d": ".", "n": "ab8_mkurone.png", "s": 3856440, "t": 1792261406, "w": 1400, "h": 2048, "char": "icey", "char_cn": "ICEY", "style": "mishima_kurone", "style_cn": "三嶋くろね", "kind": "char", "src": "prompt", "seed": 410061, "id": "29c3ba76fd", "ext": ".png", "has_orig": false}, {"p": "ab8_tiv.png", "d": ".", "n": "ab8_tiv.png", "s": 3859158, "t": 1792261376, "w": 1400, "h": 2048, "char": "icey", "char_cn": "ICEY", "style": "tiv", "style_cn": "tiv", "kind": "char", "src": "prompt", "seed": 410051, "id": "ba9829ea99", "ext": ".png", "has_orig": false}, {"p": "ab8_shirabi.png", "d": ".", "n": "ab8_shirabi.png", "s": 3659770, "t": 1792261324, "w": 1400, "h": 2048, "char": "icey", "char_cn": "ICEY", "style": "shirabi", "style_cn": "しらび", "kind": "char", "src": "prompt", "seed": 410031, "id": "4233f773ad", "ext": ".png", "has_orig": false}, {"p": "icey_clean_b.png", "d": ".", "n": "icey_clean_b.png", "s": 3529545, "t": 1792256801, "w": 1400, "h": 2048, "char": "icey", "char_cn": "ICEY", "kind": "char", "src": "prompt", "seed": 99102, "id": "ae143cd872", "ext": ".png", "has_orig": false}, {"p": "rl_075.png", "d": ".", "n": "rl_075.png", "s": 4502165, "t": 1792246951, "w": 1400, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 71001, "id": "7911a956d3", "ext": ".png", "has_orig": false}, {"p": "rl_none.png", "d": ".", "n": "rl_none.png", "s": 4598284, "t": 1792246930, "w": 1400, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 71001, "id": "2d7fe2d479", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/nv_hires_00001_.png", "d": "ComfyUI/output", "n": "nv_hires_00001_.png", "s": 3853470, "t": 1792240911, "w": 1400, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 30005, "id": "9dab4a9bca", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/nv_t2i_1_00002_.png", "d": "ComfyUI/output", "n": "nv_t2i_1_00002_.png", "s": 1765556, "t": 1792240872, "w": 832, "h": 1216, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 30001, "id": "f88717756d", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/nv_t2i_2_00001_.png", "d": "ComfyUI/output", "n": "nv_t2i_2_00001_.png", "s": 1931629, "t": 1792240850, "w": 832, "h": 1216, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 30002, "id": "cf239623e5", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/nv_t2i_1_00001_.png", "d": "ComfyUI/output", "n": "nv_t2i_1_00001_.png", "s": 1765470, "t": 1792240843, "w": 832, "h": 1216, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 30001, "id": "d2e193c948", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/t_hyper8_0_00001_.png", "d": "ComfyUI/output", "n": "t_hyper8_0_00001_.png", "s": 1823810, "t": 1792240685, "w": 832, "h": 1216, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 20000, "id": "12d40120bb", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/bench_hyper8_00001_.png", "d": "ComfyUI/output", "n": "bench_hyper8_00001_.png", "s": 1915928, "t": 1792240586, "w": 832, "h": 1216, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 12345, "id": "363b518f75", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/sr_lanczos_00001_.png", "d": "ComfyUI/output", "n": "sr_lanczos_00001_.png", "s": 2982589, "t": 1792239348, "w": 1400, "h": 2048, "kind": "other", "id": "4bd5c32a30", "ext": ".png", "has_orig": false}, {"p": "reimu_gris_hd.png", "d": ".", "n": "reimu_gris_hd.png", "s": 3040392, "t": 1792237621, "w": 1400, "h": 2048, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 9103, "id": "4f326e0bc9", "ext": ".png", "has_orig": false}, {"p": "reimu_kandinsky.png", "d": ".", "n": "reimu_kandinsky.png", "s": 1517875, "t": 1792237380, "w": 832, "h": 1216, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 8807, "id": "93a1e59373", "ext": ".png", "has_orig": false}, {"p": "reimu_mondrian.png", "d": ".", "n": "reimu_mondrian.png", "s": 1348061, "t": 1792237319, "w": 832, "h": 1216, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 8806, "id": "b5c4775af4", "ext": ".png", "has_orig": false}, {"p": "reimu_boccioni.png", "d": ".", "n": "reimu_boccioni.png", "s": 1396162, "t": 1792237150, "w": 832, "h": 1216, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 8803, "id": "f6e654a938", "ext": ".png", "has_orig": false}, {"p": "reimu_leger.png", "d": ".", "n": "reimu_leger.png", "s": 1411950, "t": 1792237101, "w": 832, "h": 1216, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 8802, "id": "d40d0d02f0", "ext": ".png", "has_orig": false}, {"p": "reimu_gris.png", "d": ".", "n": "reimu_gris.png", "s": 1466326, "t": 1792237052, "w": 832, "h": 1216, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 8801, "id": "ad2eebc185", "ext": ".png", "has_orig": false}, {"p": "reimu_matisse.png", "d": ".", "n": "reimu_matisse.png", "s": 1499809, "t": 1792236265, "w": 832, "h": 1216, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 7703, "id": "bf8606d421", "ext": ".png", "has_orig": false}, {"p": "reimu_munch.png", "d": ".", "n": "reimu_munch.png", "s": 1408642, "t": 1792236215, "w": 832, "h": 1216, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 7702, "id": "3df41fda8f", "ext": ".png", "has_orig": false}, {"p": "reimu_mucha.png", "d": ".", "n": "reimu_mucha.png", "s": 1662259, "t": 1792236164, "w": 832, "h": 1216, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 7701, "id": "395197d55f", "ext": ".png", "has_orig": false}, {"p": "reimu_construct.png", "d": ".", "n": "reimu_construct.png", "s": 1142287, "t": 1792233750, "w": 832, "h": 1216, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 3302, "id": "c5cea11a94", "ext": ".png", "has_orig": false}, {"p": "reimu_impression.png", "d": ".", "n": "reimu_impression.png", "s": 1648034, "t": 1792233710, "w": 832, "h": 1216, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 3301, "id": "fd437b6e54", "ext": ".png", "has_orig": false}, {"p": "reimu_ukiyoe.png", "d": ".", "n": "reimu_ukiyoe.png", "s": 1871869, "t": 1792233103, "w": 832, "h": 1216, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 4242, "id": "15dee35cc4", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/diag_ipa055_00001_.png", "d": "ComfyUI/output", "n": "diag_ipa055_00001_.png", "s": 1886181, "t": 1792232407, "w": 832, "h": 1216, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 8888, "id": "14940eadf0", "ext": ".png", "has_orig": false}, {"p": "ComfyUI/output/reimu_ipa_00001_.png", "d": "ComfyUI/output", "n": "reimu_ipa_00001_.png", "s": 5599021, "t": 1792232314, "w": 1408, "h": 2056, "char": "hakurei_reimu", "char_cn": "博丽灵梦", "kind": "char", "src": "prompt", "seed": 8890, "id": "e61705b333", "ext": ".png", "has_orig": false}], "exported": "2026-10-20 20:55"};
+const CHUNK = 140;
+
+/* 部署模式：'local' = 连本机 gallery_server；'cloud' = 纯静态（读 index.json + 对象存储）。
+   export_web.py 导出云端版时会自动把下面这行改成 'cloud'，其余代码一行不用动。
+   图片 URL 一律走 thumbURL / previewURL / origURL 三个函数，不要在各处手拼。 */
+const MODE = 'cloud';
+/* 云端资源前缀：图片不在同一个域名下时填绝对地址（如 OSS），留空 = 同源相对路径。
+   export_web.py 导出时按需改写这两行。 */
+const ASSET_BASE = "https://liyuan570.oss-cn-beijing.aliyuncs.com/g/891488ba67ef";
+const CLOUD = MODE === 'cloud';
+if (CLOUD) document.documentElement.classList.add('cloud-mode');
+
+function itemByP(p){ return (S.byPath && S.byPath[p]) || { p: p }; }
+function assetUrl(rel){
+  const b = String(ASSET_BASE || '').replace(/\/+$/, '');
+  return b ? b + '/' + rel : rel;
+}
+function thumbURL(p, w){
+  const it = itemByP(p);
+  if (CLOUD && it.id) return assetUrl('t/' + it.id + (w >= 900 ? '_1200.webp' : '_400.webp'));
+  return '/thumb?w=' + w + '&p=' + encodeURIComponent(p);
+}
+function previewURL(p){
+  const it = itemByP(p);
+  if (CLOUD && it.id) return assetUrl('v/' + it.id + '_1200.webp');
+  return '/thumb?w=1400&p=' + encodeURIComponent(p);
+}
+function origURL(p){
+  const it = itemByP(p);
+  if (CLOUD && it.id) return assetUrl('o/' + it.id + (it.ext || '.png'));
+  return '/img?dl=1&p=' + encodeURIComponent(p);
+}
+const $ = s => document.querySelector(s);
+const fmtSize = b => b > 1e9 ? (b/1e9).toFixed(2)+' GB'
+             : b > 1e6 ? (b/1e6).toFixed(1)+' MB'
+             : b > 1e3 ? Math.round(b/1e3)+' KB' : b+' B';
+const fmtDate = t => { const d=new Date(t*1000);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- 数据 ---------- */
+async function load(){
+  /* 云端有两种取数方式：内联（window.__GALLERY__，入口页放在 GitHub Pages 时用，
+     省一次请求也避开 CORS）或同目录 index.json。本机仍然打 /api/list。 */
+  let d;
+  if (CLOUD && window.__GALLERY__) d = window.__GALLERY__;
+  else d = await (await fetch(CLOUD ? 'index.json' : '/api/list')).json();
+  S.items = d.items; S.trash = d.trash || [];
+  S.byPath = {}; S.items.forEach(it => { S.byPath[it.p] = it; });
+  S.chars = d.chars || {}; S.styles = d.styles || {}; S.indexed = d.indexed || 0;
+  renderChips(d.groups); renderCharSel(); applyFilter(); renderTrash();
+}
+
+/* 角色下拉：按图片数排序，只列有图的角色 */
+function renderCharSel(){
+  const sel = $('#charSel');
+  const cnt = {};
+  S.items.forEach(it=>{ if (it.char) cnt[it.char] = (cnt[it.char]||0)+1; });
+  const rows = Object.keys(cnt).sort((a,b)=> cnt[b]-cnt[a] || a.localeCompare(b));
+  const label = id => (S.chars[id] && S.chars[id].cn) || id;
+  sel.innerHTML = `<option value="*">全部角色（${S.items.filter(i=>i.char).length}）</option>` +
+    rows.map(id=>`<option value="${esc(id)}">${esc(label(id))}（${cnt[id]}）</option>`).join('') +
+    `<option value="__none">未标注（${S.items.filter(i=>!i.char).length}）</option>`;
+  sel.value = S.charFilter;
+}
+
+function renderChips(groups){
+  const wrap = $('#chips');
+  const total = S.items.length;
+  const entries = Object.entries(groups).sort((a,b)=>b[1]-a[1]);
+  let html = `<button class="chip on" data-g="*">全部<b>${total}</b></button>`;
+  for (const [g,n] of entries){
+    const label = g === '.' ? '根目录' : g.replace(/^stylelib\//,'').replace(/^out\//,'out/');
+    html += `<button class="chip" data-g="${esc(g)}">${esc(label)}<b>${n}</b></button>`;
+  }
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    S.group = c.dataset.g;
+    wrap.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on', x===c));
+    applyFilter();
+  });
+}
+
+function applyFilter(){
+  const q = S.q.trim().toLowerCase();
+  const terms = q ? q.split(/\s+/).filter(Boolean) : [];
+  let arr = S.items.filter(it=>{
+    if (S.group !== '*' && it.d !== S.group) return false;
+    if (S.charFilter === '__none') { if (it.char) return false; }
+    else if (S.charFilter !== '*' && it.char !== S.charFilter) return false;
+    if (!terms.length) return true;
+    // 搜索范围：角色（中/英/别名）、画风（中/英）、参考图画师、种子、文件名、目录、生成参数
+    const hay = [
+      it.n, it.p, it.char, it.char_cn, it.style, it.style_cn, it.artist,
+      it.seed, it.kind,
+      it.m ? JSON.stringify(it.m) : ''
+    ].filter(Boolean).join(' ').toLowerCase();
+    return terms.every(t => hay.includes(t));
+  });
+  const by = S.sort;
+  arr.sort((a,b)=> by==='old'? a.t-b.t : by==='name'? a.n.localeCompare(b.n)
+                 : by==='char'? (charLabel(a).localeCompare(charLabel(b)) || b.t-a.t)
+                 : by==='size'? b.s-a.s : b.t-a.t);
+  S.filtered = arr; S.shown = 0;
+  $('#grid').innerHTML = '';
+  renderMore();
+  const bytes = arr.reduce((s,i)=>s+i.s,0);
+  $('#stat').textContent = `${arr.length} 张 · ${fmtSize(bytes)}` +
+      (arr.length !== S.items.length ? ` （共 ${S.items.length} 张）` : '');
+}
+
+/* 卡片上的主标题：优先角色中文名 */
+function charLabel(it){
+  if (it.char) return it.char_cn || it.char;
+  if (it.artist) return it.artist;
+  if (it.kind === 'ref') return it.style_cn || it.style || '画师参考';
+  if (it.kind === 'compare') return '对比图';
+  return it.n.replace(/\.[^.]+$/, '');
+}
+function metaLabel(it){
+  const a = [];
+  if (it.char && it.style) a.push(it.style_cn || it.style);
+  else if (it.kind === 'ref') a.push('画师参考');
+  else if (it.style) a.push(it.style_cn || it.style);
+  if (it.kind === 'compare' && !it.style) a.push('对比');
+  if (it.w && it.h) a.push(it.w + '×' + it.h);
+  a.push(fmtSize(it.s));
+  return a.join(' · ');
+}
+const isUntagged = it => !it.char && !it.artist && !it.style && it.kind !== 'compare';
+
+function renderMore(){
+  const grid = $('#grid');
+  const slice = S.filtered.slice(S.shown, S.shown + CHUNK);
+  if (!S.filtered.length){
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+      <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#3a4250" stroke-width="1.5" style="margin:auto">
+        <rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-5 4 4 3-3 4 4"/></svg>
+      <b>没有匹配的图片</b>换个关键词或切回「全部」</div>`;
+    $('#sentinel').textContent = '';
+    return;
+  }
+  const frag = document.createDocumentFragment();
+  slice.forEach(it=>{
+    const div = document.createElement('div');
+    div.className = 'card' + (S.sel.has(it.p) ? ' sel' : '') + (isUntagged(it) ? ' untagged' : '');
+    div.dataset.p = it.p;
+    // 用真实宽高撑出图片框，网格按它算高度 —— 图不会被裁
+    div.style.setProperty('--ar', (it.w && it.h) ? (it.w / it.h) : 0.75);
+    div.innerHTML = `
+      <div class="pic">
+        <div class="ph">◫</div>
+        <img alt="${esc(charLabel(it))}" loading="lazy">
+        <div class="tick">✓</div>
+        <div class="save" title="保存到本机">⤓</div>
+        <div class="kill" title="删除">✕</div>
+      </div>
+      <div class="cap">
+        <div class="c1">${esc(charLabel(it))}</div>
+        <div class="c2">${esc(metaLabel(it))}</div>
+      </div>`;
+    const img = div.querySelector('img');
+    img.onload = () => img.classList.add('loaded');
+    io.observe(img);
+    img.dataset.src = thumbURL(it.p, 380);
+    div.onclick = e => {
+      if (e.target.closest('.kill')) { e.stopPropagation(); askDelete([it.p]); return; }
+      if (e.target.closest('.save')) { e.stopPropagation(); saveOne(it.p); return; }
+      if (S.selecting) { toggleSel(it.p, div); return; }
+      openLb(it.p);
+    };
+    frag.appendChild(div);
+  });
+  grid.appendChild(frag);
+  S.shown += slice.length;
+  layoutSpans();
+  $('#sentinel').textContent = S.shown < S.filtered.length ? '向下滚动加载更多…' : '';
+}
+
+/* 瀑布流排版：把每张卡片的真实高度换算成 2px 行高占几行。
+   列宽一致，所以只需算一次；resize 或追加新卡时重排。 */
+function layoutSpans(){
+  const grid = $('#grid');
+  const cards = grid.querySelectorAll(':scope > .card');
+  if (!cards.length) return;
+  const cs = getComputedStyle(grid);
+  const rowH = parseFloat(cs.gridAutoRows) || 2;
+  const gap = parseFloat(cs.rowGap) || 13;
+  const colW = cards[0].getBoundingClientRect().width;
+  if (!colW) return;
+  const CAP = 54;                       // 52px 说明条 + 上下 1px 边框
+  cards.forEach(c=>{
+    const ar = parseFloat(c.style.getPropertyValue('--ar')) || 0.75;
+    const picH = colW / Math.max(ar, 0.05);
+    const span = Math.max(1, Math.ceil((picH + CAP + gap) / (rowH + gap)));
+    c.style.gridRowEnd = 'span ' + span;
+  });
+}
+let _rzT;
+window.addEventListener('resize', ()=>{ clearTimeout(_rzT); _rzT = setTimeout(layoutSpans, 150); });
+
+const io = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if (e.isIntersecting){
+      const img = e.target;
+      if (img.dataset.src){ img.src = img.dataset.src; img.removeAttribute('data-src'); }
+      io.unobserve(img);
+    }
+  });
+}, {rootMargin:'600px'});
+
+new IntersectionObserver(es=>{
+  if (es[0].isIntersecting && S.shown && S.shown < S.filtered.length) renderMore();
+}, {rootMargin:'400px'}).observe($('#sentinel'));
+
+/* ---------- 视图密度 ---------- */
+(function initBig(){
+  const on = localStorage.getItem('gallery.big') === '1';
+  document.body.classList.toggle('big', on);
+  const b = $('#bigBtn');
+  b.classList.toggle('on', on);
+  b.textContent = on ? '紧凑' : '大图';
+  b.onclick = ()=>{
+    const now = !document.body.classList.contains('big');
+    document.body.classList.toggle('big', now);
+    localStorage.setItem('gallery.big', now ? '1' : '0');
+    b.classList.toggle('on', now);
+    b.textContent = now ? '紧凑' : '大图';
+    layoutSpans();                       // 列宽变了，重算瀑布流跨度
+  };
+})();
+
+/* ---------- 选择 ---------- */
+function toggleSel(p, el){
+  if (S.sel.has(p)) S.sel.delete(p); else S.sel.add(p);
+  const on = S.sel.has(p);
+  if (el) el.classList.toggle('sel', on);
+  $('#selCnt').textContent = S.sel.size;
+  $('#selbar').classList.toggle('show', S.selecting);
+}
+$('#selBtn').onclick = () => {
+  S.selecting = !S.selecting;
+  document.body.classList.toggle('selecting', S.selecting);
+  $('#selBtn').classList.toggle('on', S.selecting);
+  $('#selBtn').textContent = S.selecting ? '退出选择' : '选择';
+  if (!S.selecting){ S.sel.clear(); $('#selCnt').textContent = 0;
+    document.querySelectorAll('.card.sel').forEach(c=>c.classList.remove('sel')); }
+  $('#selbar').classList.toggle('show', S.selecting);
+};
+$('#selAll').onclick = () => {
+  S.filtered.forEach(i=>S.sel.add(i.p));
+  document.querySelectorAll('.card').forEach(c=>c.classList.add('sel'));
+  $('#selCnt').textContent = S.sel.size;
+};
+$('#selNone').onclick = () => {
+  S.sel.clear(); $('#selCnt').textContent = 0;
+  document.querySelectorAll('.card.sel').forEach(c=>c.classList.remove('sel'));
+};
+$('#selDel').onclick = () => { if (S.sel.size) askDelete([...S.sel]); };
+
+/* ---------- 保存（下载到本机） ---------- */
+function triggerDownload(url, name){
+  const a = document.createElement('a');
+  a.href = url; a.download = name || '';
+  a.style.display = 'none';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>a.remove(), 1500);
+}
+
+function saveOne(p){
+  triggerDownload(origURL(p), p.split('/').pop());
+  toast('开始下载：' + p.split('/').pop());
+}
+
+async function saveSelected(){
+  if (!S.sel.size){ toast('先选择要保存的图片'); return; }
+  if (CLOUD){
+    // 静态托管没有打包服务，改成逐张触发下载（浏览器会连续弹几个下载框）
+    let i = 0;
+    for (const p of [...S.sel]){ setTimeout(()=>saveOne(p), i++ * 500); }
+    toast('云端模式：逐张下载 ' + S.sel.size + ' 张');
+    return;
+  }
+  const btn = $('#selSave'), old = btn.textContent;
+  btn.disabled = true; btn.textContent = '打包中…';
+  try {
+    const r = await fetch('/api/zip', {method:'POST', headers:{'Content-Type':'application/json'},
+                                      body: JSON.stringify({paths:[...S.sel]})});
+    const d = await r.json();
+    if (!d.ok){ toast(d.err || '打包失败'); return; }
+    triggerDownload(d.url, d.name);
+    toast(`已打包 ${d.count} 张 · ${fmtSize(d.size)}，开始下载`);
+  } catch (e){
+    toast('打包失败：' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = old;
+  }
+}
+$('#selSave').onclick = saveSelected;
+
+// 顶栏「保存」：已选中就批量打包；没选中就引导进选择模式，避免「找不到保存入口」
+$('#saveBtn').onclick = () => {
+  if (S.sel.size){ saveSelected(); return; }
+  if (!S.selecting) $('#selBtn').click();
+  toast('勾选图片后点「保存选中」；只想存单张，可直接点图片右上角 ⤓');
+};
+
+/* ---------- 灯箱 ---------- */
+function visList(){ return S.filtered; }
+function openLb(p){
+  const list = visList();
+  const i = list.findIndex(x=>x.p===p);
+  if (i < 0) return;
+  S.lbIndex = i; paintLb();
+  $('#lb').classList.add('show');
+  $('#lbSide').classList.remove('open');
+  document.body.style.overflow = 'hidden';   // 手机上看图时锁住背景滚动
+}
+function closeLb(){
+  $('#lb').classList.remove('show');
+  $('#lbSide').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function paintLb(){
+  const list = visList(), it = list[S.lbIndex];
+  if (!it) return;
+  // 预览用 1400px 的 webp：尺寸够看全，体积只有原图零头（手机加载快）
+  const im = $('#lbImg');
+  im.classList.remove('actual');
+  im.dataset.orig = '0';
+  im.src = previewURL(it.p);
+  $('#lbFull').classList.remove('on');
+  $('#lbSide').classList.remove('open');
+  $('#lbName').textContent = charLabel(it);
+  $('#lbPath').textContent = it.p;
+  const rows = [];
+  if (it.char) rows.push(['角色', `${it.char_cn || it.char}　${it.char}`]);
+  if (it.style){
+    const st = S.styles[it.style] || {};
+    rows.push(['画风', `${st.cn || it.style}${st.retired ? '（已出库）' : ''}　${it.style}`]);
+  }
+  if (it.artist && !it.style) rows.push(['画师参考', it.artist]);
+  rows.push(['尺寸', `${it.w}×${it.h}`],
+            ['体积', fmtSize(it.s)],
+            ['修改时间', fmtDate(it.t)],
+            ['目录', it.d === '.' ? '根目录' : it.d]);
+  if (it.m){
+    if (it.m.scene) rows.push(['场景', it.m.scene]);
+    if (it.m.preset) rows.push(['浓度档', it.m.preset]);
+    if (it.m.steps) rows.push(['采样', `${it.m.steps} steps · cfg ${it.m.cfg}`]);
+    if (it.m.sampler) rows.push(['采样器', `${it.m.sampler} / ${it.m.scheduler}`]);
+  }
+  if (it.seed) rows.push(['种子', it.seed]);
+  $('#lbKv').innerHTML = rows.map(([k,v])=>`<div class="kv"><span>${k}</span><b>${esc(v)}</b></div>`).join('');
+}
+function lbStep(d){
+  const list = visList();
+  if (!list.length) return;
+  S.lbIndex = (S.lbIndex + d + list.length) % list.length;
+  paintLb();
+}
+$('#lbPrev').onclick = ()=>lbStep(-1);
+$('#lbNext').onclick = ()=>lbStep(1);
+$('#lbClose').onclick = closeLb;
+$('#lb').onclick = e => {
+  if (e.target.id === 'lb' || e.target.classList.contains('stage')) closeLb();
+};
+/* 点图切 1:1 原始像素（桌面）；手机上图片已按屏宽铺满，不抢点击 */
+$('#lbImg').onclick = e => {
+  e.stopPropagation();
+  if (matchMedia('(max-width:900px)').matches) return;
+  e.target.classList.toggle('actual');
+};
+/* 「查看原图」：预览图 ↔ 原始文件 */
+$('#lbFull').onclick = ()=>{
+  const it = visList()[S.lbIndex]; if (!it) return;
+  const im = $('#lbImg');
+  const on = im.dataset.orig === '1';
+  im.dataset.orig = on ? '0' : '1';
+  im.src = on ? previewURL(it.p) : origURL(it.p);
+  $('#lbFull').classList.toggle('on', !on);
+};
+/* 手机：底部信息抽屉 */
+$('#lbGrab').onclick = ()=>$('#lbSide').classList.toggle('open');
+$('#lbDel').onclick = ()=>{ const it = visList()[S.lbIndex]; if (it) askDelete([it.p]); };
+$('#lbSave').onclick = ()=>{ const it = visList()[S.lbIndex]; if (it) saveOne(it.p); };
+$('#lbReveal').onclick = ()=>{ const it = visList()[S.lbIndex]; if (it)
+  fetch('/api/reveal',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p:it.p})}); };
+
+/* ---------- 删除 ---------- */
+function askDelete(paths){
+  if (CLOUD){ toast('云端是只读快照，删图请在电脑上操作'); return; }
+  const names = paths.slice(0,4).map(p=>p.split('/').pop());
+  $('#mTitle').textContent = paths.length===1 ? '删除这张图片？' : `删除 ${paths.length} 张图片？`;
+  $('#mBody').innerHTML = (paths.length<=4
+      ? names.map(n=>`<div style="color:#c9cfda;font-size:12.5px">· ${esc(n)}</div>`).join('')
+      : `<div style="color:#c9cfda;font-size:12.5px">· ${esc(names.join('、'))} 等 ${paths.length} 个文件</div>`)
+    + `<div style="margin-top:9px;color:#7d8595;font-size:12.5px">文件会移入回收站，可以随时恢复。</div>`;
+  const w = paths.filter(p=>p.startsWith('stylelib/sample/'));
+  $('#mWarn').style.display = w.length ? 'block' : 'none';
+  $('#mWarn').textContent = w.length
+    ? `注意：其中 ${w.length} 张是画风库的基准样张，删掉后风格页会缺图，结构自审会报错。` : '';
+  const modal = $('#modal'); modal.classList.add('show');
+  $('#mCancel').onclick = ()=>modal.classList.remove('show');
+  $('#mOk').onclick = async ()=>{ modal.classList.remove('show'); await doDelete(paths); };
+}
+
+async function doDelete(paths){
+  const r = await fetch('/api/delete',{method:'POST',headers:{'Content-Type':'application/json'},
+                                        body:JSON.stringify({paths})});
+  const d = await r.json();
+  if (!d.ok){ toast('删除失败'); return; }
+  const set = new Set(d.done);
+  S.items = S.items.filter(i=>!set.has(i.p));
+  set.forEach(p=>S.sel.delete(p));
+  S.trash = d.trash;
+  S.lastBatch = d.done;
+  renderCharSel(); applyFilter(); renderTrash();
+  $('#selCnt').textContent = S.sel.size;
+  if ($('#lb').classList.contains('show')){
+    const list = visList();
+    if (!list.length) closeLb();
+    else { S.lbIndex = Math.min(S.lbIndex, list.length-1); paintLb(); }
+  }
+  toast(`已删除 ${d.done.length} 张`, ()=>undo());
+}
+
+async function undo(){
+  if (!S.lastBatch.length) return;
+  const r = await fetch('/api/restore',{method:'POST',headers:{'Content-Type':'application/json'},
+                                        body:JSON.stringify({names: S.trash.filter(m=>S.lastBatch.includes(m.orig)).map(m=>m.name)})});
+  const d = await r.json();
+  S.trash = d.trash;
+  await load();
+  toast(`已恢复 ${d.done.length} 张`);
+}
+
+/* ---------- 回收站 ---------- */
+function renderTrash(){
+  $('#trashCnt').textContent = S.trash.length ? S.trash.length : '';
+  $('#trashInfo').textContent = S.trash.length
+    ? `${S.trash.length} 个文件 · ${fmtSize(S.trash.reduce((s,m)=>s+m.size,0))}` : '空';
+  $('#trashList').innerHTML = S.trash.length ? S.trash.slice().reverse().map(m=>`
+    <div class="tr" data-n="${esc(m.name)}">
+      <div class="nm"><div>${esc(m.orig.split('/').pop())}</div>
+        <div>${esc(m.orig)} · ${fmtSize(m.size)}</div></div>
+      <button data-a="r">恢复</button>
+      <button data-a="d">彻底删</button>
+    </div>`).join('') : `<div class="empty" style="padding:40px 10px"><b>回收站是空的</b>删除的图片会先放这里</div>`;
+  $('#trashList').querySelectorAll('.tr').forEach(row=>{
+    row.querySelectorAll('button').forEach(b=>b.onclick = async ()=>{
+      const name = row.dataset.n;
+      const url = b.dataset.a === 'r' ? '/api/restore' : '/api/purge';
+      const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({names:[name]})});
+      const d = await r.json(); S.trash = d.trash; renderTrash();
+      if (b.dataset.a === 'r'){ await load(); toast('已恢复'); } else toast('已彻底删除');
+    });
+  });
+}
+$('#trashBtn').onclick = ()=>{ $('#drawer').classList.add('show'); $('#scrim').classList.add('show'); };
+$('#drawerClose').onclick = closeDrawer;
+$('#scrim').onclick = closeDrawer;
+function closeDrawer(){ $('#drawer').classList.remove('show'); $('#scrim').classList.remove('show'); }
+$('#trashRestoreAll').onclick = async ()=>{
+  if (!S.trash.length) return;
+  const r = await fetch('/api/restore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({all:true})});
+  const d = await r.json(); S.trash = d.trash; renderTrash(); await load(); toast(`已恢复 ${d.done.length} 张`);
+};
+$('#trashEmpty').onclick = async ()=>{
+  if (!S.trash.length) return;
+  if (!confirm(`彻底删除回收站里的 ${S.trash.length} 个文件？此操作不可恢复。`)) return;
+  const r = await fetch('/api/purge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({all:true})});
+  const d = await r.json(); S.trash = d.trash; renderTrash(); toast('回收站已清空');
+};
+
+/* ---------- 其它 ---------- */
+$('#q').oninput = e => { S.q = e.target.value; applyFilter(); };
+$('#sort').onchange = e => { S.sort = e.target.value; applyFilter(); };
+$('#charSel').onchange = e => { S.charFilter = e.target.value; applyFilter(); };
+
+let toastTimer;
+function toast(msg, action){
+  $('#toastMsg').textContent = msg;
+  const a = $('#toastAct');
+  if (action){ a.style.display='inline'; a.textContent='撤销'; a.onclick = ()=>{ a.style.display='none'; action(); }; }
+  else a.style.display='none';
+  $('#toast').classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>$('#toast').classList.remove('show'), 5200);
+}
+
+document.addEventListener('keydown', e=>{
+  if (e.key === '/' && document.activeElement.tagName !== 'INPUT'){ e.preventDefault(); $('#q').focus(); }
+  if (!$('#lb').classList.contains('show')) return;
+  if (e.key === 'Escape') closeLb();
+  if (e.key === 'ArrowLeft') lbStep(-1);
+  if (e.key === 'ArrowRight') lbStep(1);
+  if (e.key === 's' || e.key === 'S'){ const it = visList()[S.lbIndex]; if (it) saveOne(it.p); }
+});
+
+load();
+
+</script>
+</body>
+</html>
