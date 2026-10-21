@@ -79,6 +79,10 @@ async function load(){
     if(!r.ok) throw new Error(r.status);
     const d = await r.json();
     cur = (d.url || '').trim();
+    // latest.json 里带了密钥就直接存下，手机上不用再手粘
+    if (d.k && !localStorage.getItem(LS_KEY)) {
+      localStorage.setItem(LS_KEY, String(d.k).trim());
+    }
     $('#url').textContent = cur || '（电脑端守护没在跑，地址暂时为空）';
     $('#url').className = 'url' + (cur ? '' : ' bad');
     $('#time').textContent = d.updated ? '更新于 ' + d.updated : '';
